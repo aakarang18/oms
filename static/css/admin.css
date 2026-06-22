@@ -1,0 +1,8 @@
+/* Admin Portal — accent overrides */
+:root {
+  --portal-accent: #7c3aed;   /* purple accent for admin portal */
+}
+.sidebar { background: #1e1b4b; }
+.sidebar-logo .portal-label { color: #c4b5fd; }
+.nav-item.active { border-left-color: #a78bfa; }
+.stat-card::before { background: #7c3aed; }

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transporter Portal — Amar Alum</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .sidebar { background: #7c2d12; }
+    .sidebar-logo .portal-label { color: #fed7aa; }
+    .nav-item.active { border-left-color: #fb923c; }
+  </style>
+</head>
+<body>
+<div class="portal-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="company-name">Amar Alum & Allied Chemicals</div>
+      <div class="portal-label">Transporter Portal</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item active" data-section="section-dashboard" data-label="Dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+
+      <div class="nav-section-label">Operations</div>
+      <button class="nav-item" data-section="section-trips" data-label="Trips">
+        <span class="nav-icon">🚛</span> Trips
+      </button>
+      <button class="nav-item" data-section="section-rate-cards" data-label="Rate Cards">
+        <span class="nav-icon">💰</span> Rate Cards
+      </button>
+      <button class="nav-item" data-section="section-fleet" data-label="Fleet">
+        <span class="nav-icon">🚗</span> Fleet
+      </button>
+      <button class="nav-item" data-section="section-invoices" data-label="Invoices">
+        <span class="nav-icon">🧾</span> Invoices
+      </button>
+      <button class="nav-item" data-section="section-payments" data-label="Payments">
+        <span class="nav-icon">💳</span> Payments
+      </button>
+
+      <div class="nav-section-label">Account</div>
+      <button class="nav-item" data-section="section-profile" data-label="Company Profile">
+        <span class="nav-icon">🏢</span> Company Profile
+      </button>
+      <button class="nav-item" data-section="section-documents" data-label="Documents">
+        <span class="nav-icon">📄</span> Documents
+      </button>
+      <button class="nav-item" data-section="section-banking" data-label="Banking Details">
+        <span class="nav-icon">🏦</span> Banking Details
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebar-avatar">T</div>
+        <div>
+          <div class="user-name" id="sidebar-name">Transporter</div>
+          <div class="user-role" id="sidebar-role">Transporter Admin</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="top-header">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="header-title" id="page-title">Dashboard</div>
+      <div class="header-actions">
+        <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
+          🔔
+          <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="section-dashboard" class="portal-section">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <span id="dash-date" style="color:var(--gray-400);font-size:.875rem"></span>
+        </div>
+
+        <div id="reg-pending-banner" class="alert alert-warning" style="display:none">
+          ⚠️ Your registration is pending review. Some features are limited until approved.
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card warning">
+            <div class="stat-label">Pending Assignments</div>
+            <div class="stat-value" id="stat-pending-trips">—</div>
+            <div class="stat-sub">Accept within 4 hours</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-label">Active Trips</div>
+            <div class="stat-value" id="stat-active-trips">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending POD Upload</div>
+            <div class="stat-value" id="stat-pod-pending">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Invoices Pending</div>
+            <div class="stat-value" id="stat-inv-pending">—</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Payments This Month</div>
+            <div class="stat-value" id="stat-payments-month">—</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-label">Compliance Alerts</div>
+            <div class="stat-value" id="stat-compliance">—</div>
+            <div class="stat-sub">Vehicles / docs expiring</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Recent Activity</h3></div>
+          <div id="activity-feed" class="card-body">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>No recent activity</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TRIPS ── -->
+      <div id="section-trips" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Trips</h1></div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="trips-assigned">Pending Acceptance</button>
+          <button class="tab-btn" data-tab="trips-active">Active</button>
+          <button class="tab-btn" data-tab="trips-pod">POD Required</button>
+          <button class="tab-btn" data-tab="trips-all">All Trips</button>
+        </div>
+        <div class="tab-panel active" data-tab="trips-assigned">
+          <div class="card"><div class="card-body" id="trips-assigned-list">
+            <div class="empty-state"><div class="empty-icon">🚛</div><p>No pending assignments</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="trips-active">
+          <div class="card"><div class="card-body" id="trips-active-list">
+            <div class="empty-state"><div class="empty-icon">🚛</div><p>No active trips</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="trips-pod">
+          <div class="card"><div class="card-body" id="trips-pod-list">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>No trips awaiting POD</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="trips-all">
+          <div class="card"><div class="card-body" id="trips-all-list">
+            <div class="empty-state"><div class="empty-icon">🚛</div><p>No trips yet</p></div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- ── RATE CARDS ── -->
+      <div id="section-rate-cards" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>Rate Cards</h1>
+          <button class="btn btn-primary" onclick="openModal('modal-add-rate')">+ Add Rate Card</button>
+        </div>
+        <div class="card">
+          <div class="card-body" id="rate-cards-list">
+            <div class="empty-state"><div class="empty-icon">💰</div><p>No rate cards submitted</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FLEET ── -->
+      <div id="section-fleet" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>Fleet Management</h1>
+          <button class="btn btn-primary" onclick="openModal('modal-add-vehicle')">+ Add Vehicle</button>
+        </div>
+        <div class="card">
+          <div class="card-body" id="fleet-list">
+            <div class="empty-state"><div class="empty-icon">🚗</div><p>No vehicles registered</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INVOICES ── -->
+      <div id="section-invoices" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Invoices</h1></div>
+        <div class="card">
+          <div class="card-body" id="invoices-list">
+            <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAYMENTS ── -->
+      <div id="section-payments" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Payments</h1></div>
+        <div class="card">
+          <div class="card-body" id="payments-list">
+            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments recorded yet</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROFILE / DOCS / BANKING (placeholders for Phase 1) ── -->
+      <div id="section-profile" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Company Profile</h1></div>
+        <div id="profile-content"><div class="empty-state"><div class="spinner"></div></div></div>
+      </div>
+      <div id="section-documents" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Documents</h1></div>
+        <div id="documents-content"><div class="empty-state"><div class="spinner"></div></div></div>
+      </div>
+      <div id="section-banking" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Banking Details</h1></div>
+        <div id="banking-content"><div class="empty-state"><div class="spinner"></div></div></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-panel-header">
+    <h4>Notifications</h4>
+    <button onclick="markAllRead()" class="btn btn-sm btn-ghost">Mark all read</button>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/static/js/common.js"></script>
+<script src="/static/js/transporter/dashboard.js"></script>
+</body>
+</html>

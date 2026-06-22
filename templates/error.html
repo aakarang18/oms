@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error {{ code }} — Amar Alum Portal</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--gray-50); }
+    .error-card { text-align:center; padding:48px 40px; max-width:480px; }
+    .error-code { font-size:5rem; font-weight:900; color:var(--brand-dark); opacity:.15; line-height:1; }
+    .error-msg { color:var(--gray-600); margin:12px 0 28px; }
+  </style>
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-code">{{ code }}</div>
+    <h2>{{ message }}</h2>
+    <p class="error-msg">Please go back or return to the portal home.</p>
+    <a href="/" class="btn btn-dark">Return to Portal</a>
+  </div>
+</body>
+</html>
