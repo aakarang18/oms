@@ -11,14 +11,31 @@ async function initVendorPortal() {
   }
 
   // Populate sidebar
-  const initials = (_vendorUser.email || _vendorUser.mobile || 'V')[0].toUpperCase();
+  const initials = (_vendorUser.name || _vendorUser.email || _vendorUser.mobile || 'V')[0].toUpperCase();
   document.getElementById('sidebar-avatar').textContent = initials;
-  document.getElementById('sidebar-name').textContent   = _vendorUser.email || _vendorUser.mobile;
+  document.getElementById('sidebar-name').textContent   = _vendorUser.name || _vendorUser.email || _vendorUser.mobile;
   document.getElementById('sidebar-role').textContent   =
     (_vendorUser.role || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   document.getElementById('dash-date').textContent =
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Check registration status — show wizard for non-approved vendors
+  try {
+    const profile = await api('GET', '/api/vendor/profile');
+    if (profile.status !== 'approved') {
+      document.getElementById('main-portal-wrap').style.display = 'none';
+      document.getElementById('reg-wizard-wrap').style.display = '';
+      await initRegistrationWizard();
+      return;
+    }
+  } catch {
+    // If no vendor profile yet, show wizard
+    document.getElementById('main-portal-wrap').style.display = 'none';
+    document.getElementById('reg-wizard-wrap').style.display = '';
+    await initRegistrationWizard();
+    return;
+  }
 
   await loadVendorDashboard();
 }

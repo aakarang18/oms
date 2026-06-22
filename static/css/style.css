@@ -678,3 +678,194 @@ tbody td:last-child { white-space: nowrap; }
   .wizard-steps { gap: 0; }
   .wizard-step { min-width: 60px; }
 }
+
+/* ── Data Table ── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.data-table thead tr {
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--border);
+}
+.data-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--gray-50); }
+
+/* ── Form Grids ── */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 600px) {
+  .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ── Detail Sections (admin review modal) ── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 640px) {
+  .detail-grid { grid-template-columns: 1fr; }
+}
+.detail-section {
+  margin-bottom: 1.5rem;
+}
+.detail-section h4 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-500);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.detail-list {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+}
+.detail-list dt {
+  color: var(--gray-500);
+  font-weight: 500;
+}
+.detail-list dd {
+  color: var(--gray-800);
+  margin: 0;
+  word-break: break-word;
+}
+
+/* ── Wizard progress (new style) ── */
+.wizard-progress {
+  margin-bottom: 1rem;
+}
+.progress-bar-wrap {
+  background: var(--gray-200);
+  border-radius: 9999px;
+  height: 6px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--brand-mid);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+.wizard-dots {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.wizard-step-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+}
+.wizard-step-dot .dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--gray-200);
+  color: var(--gray-500);
+  border: 2px solid var(--gray-200);
+  transition: all 0.3s;
+}
+.wizard-step-dot.active .dot {
+  background: var(--brand-mid);
+  color: #fff;
+  border-color: var(--brand-mid);
+}
+.wizard-step-dot.completed .dot {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+.wizard-step-dot .dot-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-align: center;
+  white-space: nowrap;
+}
+.wizard-step-dot.active .dot-label { color: var(--brand-mid); font-weight: 600; }
+.wizard-step-dot.completed .dot-label { color: var(--success); }
+.wizard-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--gray-200);
+  margin-top: 15px;
+  max-width: 60px;
+}
+
+/* ── Tab bar (simple inline) ── */
+.tab-bar {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--gray-100);
+  padding: 0.25rem;
+  border-radius: var(--radius);
+}
+.tab-bar .tab-btn {
+  padding: 0.4rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: all 0.2s;
+}
+.tab-bar .tab-btn.active {
+  background: #fff;
+  color: var(--brand-mid);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ── Form control sm ── */
+.form-control-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* ── Alert variants ── */
+.alert-info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+.alert-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}

@@ -10,14 +10,30 @@ async function initTransporterPortal() {
     return;
   }
 
-  const initials = (_transporterUser.email || _transporterUser.mobile || 'T')[0].toUpperCase();
+  const initials = (_transporterUser.name || _transporterUser.email || _transporterUser.mobile || 'T')[0].toUpperCase();
   document.getElementById('sidebar-avatar').textContent = initials;
-  document.getElementById('sidebar-name').textContent   = _transporterUser.email || _transporterUser.mobile;
+  document.getElementById('sidebar-name').textContent   = _transporterUser.name || _transporterUser.email || _transporterUser.mobile;
   document.getElementById('sidebar-role').textContent   =
     (_transporterUser.role || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   document.getElementById('dash-date').textContent =
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Check registration status — show wizard for non-approved transporters
+  try {
+    const profile = await api('GET', '/api/transporter/profile');
+    if (profile.status !== 'approved') {
+      document.getElementById('main-portal-wrap').style.display = 'none';
+      document.getElementById('reg-wizard-wrap').style.display = '';
+      await initTransporterRegistration();
+      return;
+    }
+  } catch {
+    document.getElementById('main-portal-wrap').style.display = 'none';
+    document.getElementById('reg-wizard-wrap').style.display = '';
+    await initTransporterRegistration();
+    return;
+  }
 
   await loadTransporterDashboard();
 }

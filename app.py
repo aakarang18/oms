@@ -20,13 +20,21 @@ from auth import (
 )
 from email_service import init_mail, send_email, email_otp
 from sms_service import send_otp as send_otp_sms
+from routes.vendor_reg import bp as vendor_reg_bp
+from routes.transporter_reg import bp as transporter_reg_bp
+from routes.admin_reg import bp as admin_reg_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
+app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB max upload
 
 # ─── Init ──────────────────────────────────────────────────────────────────────
 init_db()
 init_mail(app)
+
+app.register_blueprint(vendor_reg_bp)
+app.register_blueprint(transporter_reg_bp)
+app.register_blueprint(admin_reg_bp)
 
 # Start scheduler only in main process (not reloader child)
 if os.environ.get("WERKZEUG_RUN_MAIN") != "false":

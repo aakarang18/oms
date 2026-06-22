@@ -10,9 +10,9 @@ async function initAdminPortal() {
     return;
   }
 
-  const initials = (_adminUser.email || _adminUser.mobile || 'A')[0].toUpperCase();
+  const initials = (_adminUser.name || _adminUser.email || _adminUser.mobile || 'A')[0].toUpperCase();
   document.getElementById('sidebar-avatar').textContent = initials;
-  document.getElementById('sidebar-name').textContent   = _adminUser.email || _adminUser.mobile;
+  document.getElementById('sidebar-name').textContent   = _adminUser.name || _adminUser.email || _adminUser.mobile;
   document.getElementById('sidebar-role').textContent   =
     (_adminUser.role || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -64,7 +64,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (btn.dataset.section === 'section-dashboard') loadAdminDashboard();
+      const sec = btn.dataset.section;
+      if (sec === 'section-dashboard') {
+        loadAdminDashboard();
+      } else if (sec === 'section-vendor-reg') {
+        _regCurrentTab = 'vendors';
+        initAdminRegistrations();
+      } else if (sec === 'section-transporter-reg') {
+        // Route to the shared registration panel
+        showSection('section-vendor-reg');
+        setActiveNav('section-vendor-reg');
+        _regCurrentTab = 'transporters';
+        initAdminRegistrations();
+      } else if (sec === 'section-compliance') {
+        initComplianceView();
+      } else if (sec === 'section-audit') {
+        initAuditLog();
+      } else if (sec === 'section-users') {
+        initUserManagement();
+      }
     });
   });
 });

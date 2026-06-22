@@ -178,60 +178,34 @@
         </div>
       </div>
 
-      <!-- ── VENDOR REGISTRATIONS ── -->
+      <!-- ── REGISTRATIONS (shared panel, JS controls vendor/transporter tabs) ── -->
       <div id="section-vendor-reg" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Vendor Registrations</h1></div>
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="vreg-pending">Pending</button>
-          <button class="tab-btn" data-tab="vreg-info">Info Requested</button>
-          <button class="tab-btn" data-tab="vreg-approved">Approved</button>
-          <button class="tab-btn" data-tab="vreg-rejected">Rejected</button>
-        </div>
-        <div class="tab-panel active" data-tab="vreg-pending">
-          <div class="card"><div class="card-body" id="vreg-pending-list">
-            <div class="empty-state"><div class="empty-icon">🏭</div><p>No pending registrations</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="vreg-info">
-          <div class="card"><div class="card-body" id="vreg-info-list">
-            <div class="empty-state"><div class="empty-icon">ℹ️</div><p>None</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="vreg-approved">
-          <div class="card"><div class="card-body" id="vreg-approved-list">
-            <div class="empty-state"><div class="empty-icon">✅</div><p>No approved vendors yet</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="vreg-rejected">
-          <div class="card"><div class="card-body" id="vreg-rejected-list">
-            <div class="empty-state"><div class="empty-icon">❌</div><p>None</p></div>
-          </div></div>
+        <div class="page-header"><h1>Registrations</h1></div>
+        <div id="reg-toolbar" style="margin-bottom:1rem;"></div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Contact</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="reg-list-body">
+                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- ── TRANSPORTER REGISTRATIONS ── -->
+      <!-- alias for transporter reg nav button -->
       <div id="section-transporter-reg" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Transporter Registrations</h1></div>
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="treg-pending">Pending</button>
-          <button class="tab-btn" data-tab="treg-approved">Approved</button>
-          <button class="tab-btn" data-tab="treg-rejected">Rejected</button>
-        </div>
-        <div class="tab-panel active" data-tab="treg-pending">
-          <div class="card"><div class="card-body" id="treg-pending-list">
-            <div class="empty-state"><div class="empty-icon">🚛</div><p>No pending registrations</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="treg-approved">
-          <div class="card"><div class="card-body" id="treg-approved-list">
-            <div class="empty-state"><div class="empty-icon">✅</div><p>None</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="treg-rejected">
-          <div class="card"><div class="card-body" id="treg-rejected-list">
-            <div class="empty-state"><div class="empty-icon">❌</div><p>None</p></div>
-          </div></div>
-        </div>
+        <!-- redirected to section-vendor-reg by JS -->
       </div>
 
       <!-- ── RFQs ── -->
@@ -311,40 +285,59 @@
       <!-- ── COMPLIANCE ── -->
       <div id="section-compliance" class="portal-section" style="display:none">
         <div class="page-header"><h1>Compliance Dashboard</h1></div>
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="comp-expired">Expired 🔴</button>
-          <button class="tab-btn" data-tab="comp-7">Expiring in 7 days</button>
-          <button class="tab-btn" data-tab="comp-15">Expiring in 15 days</button>
-          <button class="tab-btn" data-tab="comp-30">Expiring in 30 days</button>
+        <div style="margin-bottom:1rem;display:flex;align-items:center;gap:1rem;">
+          <label class="form-label" style="margin:0;white-space:nowrap;">Filter by status:</label>
+          <select class="form-control" id="compliance-status-filter" style="width:200px;" onchange="loadComplianceData()">
+            <option value="expired">Expired</option>
+            <option value="expiring_soon">Expiring Soon (30d)</option>
+            <option value="valid">Valid</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="loadComplianceData()">↺ Refresh</button>
         </div>
-        <div class="tab-panel active" data-tab="comp-expired">
-          <div class="card"><div class="card-body" id="comp-expired-list">
-            <div class="empty-state"><div class="empty-icon">✅</div><p>No expired documents</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="comp-7">
-          <div class="card"><div class="card-body" id="comp-7-list">
-            <div class="empty-state"><div class="empty-icon">⚠️</div><p>None</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="comp-15">
-          <div class="card"><div class="card-body" id="comp-15-list">
-            <div class="empty-state"><div class="empty-icon">⚠️</div><p>None</p></div>
-          </div></div>
-        </div>
-        <div class="tab-panel" data-tab="comp-30">
-          <div class="card"><div class="card-body" id="comp-30-list">
-            <div class="empty-state"><div class="empty-icon">⚠️</div><p>None</p></div>
-          </div></div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Entity Type</th><th>Entity</th><th>Document</th><th>Expiry Date</th><th>Status</th><th>View</th></tr>
+              </thead>
+              <tbody id="compliance-list-body">
+                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- ── AUDIT LOG ── -->
       <div id="section-audit" class="portal-section" style="display:none">
         <div class="page-header"><h1>Audit Log</h1></div>
+        <div style="margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <select class="form-control" id="audit-entity-filter" style="width:180px;" onchange="loadAuditLog(1)">
+            <option value="">All entities</option>
+            <option value="vendor">Vendor</option>
+            <option value="transporter">Transporter</option>
+            <option value="rfq">RFQ</option>
+            <option value="po">PO</option>
+            <option value="invoice">Invoice</option>
+            <option value="payment">Payment</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="loadAuditLog(1)">↺ Refresh</button>
+          <span id="audit-page-info" style="color:var(--gray-500);font-size:0.875rem;"></span>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;">
+            <button class="btn btn-outline btn-sm" onclick="loadAuditLog(_auditPage - 1)" id="audit-prev-btn">← Prev</button>
+            <button class="btn btn-outline btn-sm" onclick="loadAuditLog(_auditPage + 1)" id="audit-next-btn">Next →</button>
+          </div>
+        </div>
         <div class="card">
-          <div class="card-body" id="audit-list">
-            <div class="empty-state"><div class="empty-icon">📝</div><p>No audit entries</p></div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Time</th><th>Actor</th><th>Entity</th><th>Action</th><th>Detail</th></tr>
+              </thead>
+              <tbody id="audit-list-body">
+                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -353,11 +346,18 @@
       <div id="section-users" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>User Management</h1>
-          <button class="btn btn-primary" onclick="openModal('modal-create-user')">+ Add Admin User</button>
+          <button class="btn btn-primary" id="add-admin-user-btn">+ Add Admin User</button>
         </div>
         <div class="card">
-          <div class="card-body" id="users-list">
-            <div class="empty-state"><div class="empty-icon">👥</div><p>Loading…</p></div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Name</th><th>Mobile</th><th>Role</th><th>Status</th></tr>
+              </thead>
+              <tbody id="admin-users-body">
+                <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -378,6 +378,7 @@
 <div id="toast-container"></div>
 
 <script src="/static/js/common.js"></script>
+<script src="/static/js/admin/registrations.js"></script>
 <script src="/static/js/admin/dashboard.js"></script>
 </body>
 </html>

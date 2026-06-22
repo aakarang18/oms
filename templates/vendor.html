@@ -79,6 +79,14 @@
 
     <main class="page-content">
 
+      <!-- Registration Wizard (shown before approval) -->
+      <div id="reg-wizard-wrap" style="display:none;padding:1.5rem;">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Main Portal (shown after approval) -->
+      <div id="main-portal-wrap">
+
       <!-- ── DASHBOARD ── -->
       <div id="section-dashboard" class="portal-section">
         <div class="page-header">
@@ -231,6 +239,8 @@
         </div>
       </div>
 
+      </div><!-- /main-portal-wrap -->
+
     </main>
   </div>
 </div>
@@ -247,6 +257,7 @@
 <div id="toast-container"></div>
 
 <script src="/static/js/common.js"></script>
+<script src="/static/js/vendor/registration.js"></script>
 <script src="/static/js/vendor/dashboard.js"></script>
 </body>
 </html>
