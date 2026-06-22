@@ -448,7 +448,7 @@ async function initVehicleManagement() {
 async function loadVehicles() {
   try {
     const res = await api('GET', '/api/transporter/vehicles');
-    renderVehicleList(res.vehicles || []);
+    renderVehicleList(Array.isArray(res) ? res : (res.vehicles || []));
   } catch (e) {
     Toast.error('Failed to load vehicles');
   }
@@ -585,7 +585,8 @@ async function loadVehicleDocModal(vehicleId) {
   const V_DOC_TYPES = ['rc', 'insurance', 'fitness_certificate', 'permit', 'pollution_certificate'];
   try {
     const res = await api('GET', '/api/transporter/vehicles');
-    const v = (res.vehicles || []).find(x => x.id === vehicleId);
+    const vehicles = Array.isArray(res) ? res : (res.vehicles || []);
+    const v = vehicles.find(x => x.id === vehicleId);
     const docs = v ? (v.documents || []) : [];
     body.innerHTML = V_DOC_TYPES.map(dt => {
       const existing = docs.find(d => d.doc_type === dt && !d.is_deleted);

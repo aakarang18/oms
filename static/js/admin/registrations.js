@@ -50,7 +50,7 @@ async function loadRegistrationList() {
       ? `/api/admin/vendors?status=${_regCurrentStatus}`
       : `/api/admin/transporters?status=${_regCurrentStatus}`;
     const res = await api('GET', endpoint);
-    _regList = res.vendors || res.transporters || [];
+    _regList = Array.isArray(res) ? res : (res.vendors || res.transporters || []);
     renderRegList(_regList);
   } catch (e) {
     el.innerHTML = `<tr><td colspan="6" class="text-danger" style="text-align:center;padding:1rem;">${escHtml(e.message || 'Failed to load')}</td></tr>`;
@@ -359,7 +359,7 @@ function renderAuditLog(logs) {
   el.innerHTML = logs.map(log => `
     <tr>
       <td style="font-size:0.8rem;">${fmtDate(log.created_at)}</td>
-      <td>${escHtml(log.actor_name || log.actor_id || 'System')}</td>
+      <td>${escHtml(log.mobile || log.email || log.actor_user_id || 'System')}</td>
       <td>${escHtml(log.entity_type || '—')}</td>
       <td><strong>${escHtml(log.action || '—')}</strong></td>
       <td>
@@ -375,7 +375,7 @@ function showAuditDetail(log) {
       <dl class="detail-list">
         <dt>Action</dt><dd><strong>${escHtml(log.action)}</strong></dd>
         <dt>Entity</dt><dd>${escHtml(log.entity_type)} / ${escHtml(log.entity_id || '—')}</dd>
-        <dt>Actor</dt><dd>${escHtml(log.actor_name || log.actor_id || 'System')}</dd>
+        <dt>Actor</dt><dd>${escHtml(log.mobile || log.email || log.actor_user_id || 'System')}</dd>
         <dt>Time</dt><dd>${fmtDate(log.created_at)}</dd>
       </dl>
       ${log.before ? `<div class="detail-section"><h4>Before</h4><pre style="background:var(--gray-50);padding:1rem;border-radius:6px;overflow:auto;font-size:0.8rem;">${escHtml(JSON.stringify(JSON.parse(log.before), null, 2))}</pre></div>` : ''}
@@ -407,7 +407,7 @@ async function loadAdminUsers() {
   if (!el) return;
   try {
     const res = await api('GET', '/api/admin/users');
-    renderAdminUsers(res.users || []);
+    renderAdminUsers(Array.isArray(res) ? res : (res.users || []));
   } catch (e) {
     el.innerHTML = `<tr><td colspan="4" class="text-danger">${escHtml(e.message)}</td></tr>`;
   }
