@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal — Amar Alum</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+<div class="portal-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="company-name">Amar Alum &amp; Allied Chemicals</div>
+      <div class="portal-label">Admin Portal</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item active" data-section="section-dashboard" data-label="Admin Dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+
+      <div class="nav-section-label">Onboarding</div>
+      <button class="nav-item" data-section="section-vendor-reg" data-label="Vendor Registrations">
+        <span class="nav-icon">🏭</span> Vendor Registrations
+      </button>
+      <button class="nav-item" data-section="section-transporter-reg" data-label="Transporter Registrations">
+        <span class="nav-icon">🚛</span> Transporter Registrations
+      </button>
+
+      <div class="nav-section-label">Procurement</div>
+      <button class="nav-item" data-section="section-rfqs" data-label="RFQ Management">
+        <span class="nav-icon">📋</span> RFQs
+      </button>
+      <button class="nav-item" data-section="section-quotes" data-label="Quote Comparison">
+        <span class="nav-icon">💬</span> Quote Comparison
+      </button>
+      <button class="nav-item" data-section="section-pos" data-label="Purchase Orders">
+        <span class="nav-icon">📦</span> Purchase Orders
+      </button>
+      <button class="nav-item" data-section="section-grns" data-label="GRN Management">
+        <span class="nav-icon">✅</span> GRN
+      </button>
+
+      <div class="nav-section-label">Transport</div>
+      <button class="nav-item" data-section="section-routes" data-label="Route Master">
+        <span class="nav-icon">🗺️</span> Routes
+      </button>
+      <button class="nav-item" data-section="section-rate-approval" data-label="Rate Card Approvals">
+        <span class="nav-icon">💰</span> Rate Approvals
+      </button>
+      <button class="nav-item" data-section="section-trips" data-label="Trip Management">
+        <span class="nav-icon">🚚</span> Trips
+      </button>
+
+      <div class="nav-section-label">Finance</div>
+      <button class="nav-item" data-section="section-invoices" data-label="Invoice Review">
+        <span class="nav-icon">🧾</span> Invoices
+      </button>
+      <button class="nav-item" data-section="section-payments" data-label="Payment Recording">
+        <span class="nav-icon">💳</span> Payments
+      </button>
+
+      <div class="nav-section-label">Compliance</div>
+      <button class="nav-item" data-section="section-compliance" data-label="Compliance Dashboard">
+        <span class="nav-icon">🔴</span> Compliance
+      </button>
+      <button class="nav-item" data-section="section-audit" data-label="Audit Log">
+        <span class="nav-icon">📝</span> Audit Log
+      </button>
+
+      <div class="nav-section-label">Admin</div>
+      <button class="nav-item" data-section="section-users" data-label="User Management">
+        <span class="nav-icon">👥</span> Users
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div>
+          <div class="user-name" id="sidebar-name">Admin</div>
+          <div class="user-role" id="sidebar-role">Super Admin</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="top-header">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <div class="header-title" id="page-title">Admin Dashboard</div>
+      <div class="header-actions">
+        <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
+          🔔
+          <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="section-dashboard" class="portal-section">
+        <div class="page-header">
+          <h1>Admin Dashboard</h1>
+          <span id="dash-date" style="color:var(--gray-400);font-size:.875rem"></span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card warning">
+            <div class="stat-label">Pending Registrations</div>
+            <div class="stat-value" id="stat-pending-reg">—</div>
+            <div class="stat-sub">Vendors + Transporters</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-label">Open RFQs</div>
+            <div class="stat-value" id="stat-open-rfqs">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Quotes Awaiting Eval</div>
+            <div class="stat-value" id="stat-quotes-eval">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">POs Awaiting GRN</div>
+            <div class="stat-value" id="stat-pos-grn">—</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">Invoices Under Review</div>
+            <div class="stat-value" id="stat-invoices-review">—</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-label">Compliance Alerts</div>
+            <div class="stat-value" id="stat-compliance-alerts">—</div>
+            <div class="stat-sub">🔴 Expired/expiring docs</div>
+          </div>
+        </div>
+
+        <!-- Quick action cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px">
+          <div class="card" style="cursor:pointer" onclick="showSection('section-vendor-reg');setActiveNav('section-vendor-reg')">
+            <div class="card-body" style="display:flex;align-items:center;gap:16px">
+              <div style="font-size:2rem">🏭</div>
+              <div>
+                <div style="font-weight:600;color:var(--gray-800)">Review Vendor Registrations</div>
+                <div style="font-size:.8rem;color:var(--gray-500);margin-top:2px">Approve, reject or request info</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="cursor:pointer" onclick="showSection('section-rfqs');setActiveNav('section-rfqs')">
+            <div class="card-body" style="display:flex;align-items:center;gap:16px">
+              <div style="font-size:2rem">📋</div>
+              <div>
+                <div style="font-weight:600;color:var(--gray-800)">Create New RFQ</div>
+                <div style="font-size:.8rem;color:var(--gray-500);margin-top:2px">Publish to vendors</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="cursor:pointer" onclick="showSection('section-compliance');setActiveNav('section-compliance')">
+            <div class="card-body" style="display:flex;align-items:center;gap:16px">
+              <div style="font-size:2rem">🔴</div>
+              <div>
+                <div style="font-weight:600;color:var(--gray-800)">Compliance Dashboard</div>
+                <div style="font-size:.8rem;color:var(--gray-500);margin-top:2px">Expired and expiring documents</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Recent Activity</h3></div>
+          <div id="activity-feed" class="card-body">
+            <div class="empty-state"><div class="empty-icon">📝</div><p>No recent activity</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REGISTRATIONS (shared panel, JS controls vendor/transporter tabs) ── -->
+      <div id="section-vendor-reg" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Registrations</h1></div>
+        <div id="reg-toolbar" style="margin-bottom:1rem;"></div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Contact</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="reg-list-body">
+                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- alias for transporter reg nav button -->
+      <div id="section-transporter-reg" class="portal-section" style="display:none">
+        <!-- redirected to section-vendor-reg by JS -->
+      </div>
+
+      <!-- ── RFQs ── -->
+      <div id="section-rfqs" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>RFQ Management</h1>
+          <button class="btn btn-primary" onclick="openModal('modal-create-rfq')">+ Create RFQ</button>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="rfq-draft">Draft</button>
+          <button class="tab-btn" data-tab="rfq-published">Published</button>
+          <button class="tab-btn" data-tab="rfq-closed">Closed</button>
+          <button class="tab-btn" data-tab="rfq-awarded">Awarded</button>
+        </div>
+        <div class="tab-panel active" data-tab="rfq-draft">
+          <div class="card"><div class="card-body" id="rfq-draft-list">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>No draft RFQs</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="rfq-published">
+          <div class="card"><div class="card-body" id="rfq-published-list">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>No published RFQs</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="rfq-closed">
+          <div class="card"><div class="card-body" id="rfq-closed-list">
+            <div class="empty-state"><div class="empty-icon">📋</div><p>None</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="rfq-awarded">
+          <div class="card"><div class="card-body" id="rfq-awarded-list">
+            <div class="empty-state"><div class="empty-icon">🏆</div><p>None</p></div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- Remaining sections — placeholders for Phase 2+ -->
+      <div id="section-quotes" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Quote Comparison</h1></div>
+        <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">💬</div><p>Select a closed RFQ to compare quotes</p></div></div></div>
+      </div>
+      <div id="section-pos" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Purchase Orders</h1></div>
+        <div class="card"><div class="card-body" id="admin-pos-list"><div class="empty-state"><div class="empty-icon">📦</div><p>No POs yet</p></div></div></div>
+      </div>
+      <div id="section-grns" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Goods Receipt Notes</h1></div>
+        <div class="card"><div class="card-body" id="admin-grn-list"><div class="empty-state"><div class="empty-icon">✅</div><p>No GRNs yet</p></div></div></div>
+      </div>
+      <div id="section-routes" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>Route Master</h1>
+          <button class="btn btn-primary" onclick="openModal('modal-create-route')">+ Add Route</button>
+        </div>
+        <div class="card"><div class="card-body" id="routes-list"><div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined</p></div></div></div>
+      </div>
+      <div id="section-rate-approval" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Rate Card Approvals</h1></div>
+        <div class="card"><div class="card-body" id="rate-approval-list"><div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div></div></div>
+      </div>
+      <div id="section-trips" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>Trip Management</h1>
+          <button class="btn btn-primary" onclick="openModal('modal-post-trip')">+ Post Trip</button>
+        </div>
+        <div class="card"><div class="card-body" id="admin-trips-list"><div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div></div></div>
+      </div>
+      <div id="section-invoices" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Invoice Review</h1></div>
+        <div class="card"><div class="card-body" id="admin-invoices-list"><div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices pending</p></div></div></div>
+      </div>
+      <div id="section-payments" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Payment Recording</h1></div>
+        <div class="card"><div class="card-body" id="admin-payments-list"><div class="empty-state"><div class="empty-icon">💳</div><p>No approved invoices pending payment</p></div></div></div>
+      </div>
+
+      <!-- ── COMPLIANCE ── -->
+      <div id="section-compliance" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Compliance Dashboard</h1></div>
+        <div style="margin-bottom:1rem;display:flex;align-items:center;gap:1rem;">
+          <label class="form-label" style="margin:0;white-space:nowrap;">Filter by status:</label>
+          <select class="form-control" id="compliance-status-filter" style="width:200px;" onchange="loadComplianceData()">
+            <option value="expired">Expired</option>
+            <option value="expiring_soon">Expiring Soon (30d)</option>
+            <option value="valid">Valid</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="loadComplianceData()">&#8634; Refresh</button>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Entity Type</th><th>Entity</th><th>Document</th><th>Expiry Date</th><th>Status</th><th>View</th></tr>
+              </thead>
+              <tbody id="compliance-list-body">
+                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AUDIT LOG ── -->
+      <div id="section-audit" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Audit Log</h1></div>
+        <div style="margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <select class="form-control" id="audit-entity-filter" style="width:180px;" onchange="loadAuditLog(1)">
+            <option value="">All entities</option>
+            <option value="vendor">Vendor</option>
+            <option value="transporter">Transporter</option>
+            <option value="rfq">RFQ</option>
+            <option value="po">PO</option>
+            <option value="invoice">Invoice</option>
+            <option value="payment">Payment</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="loadAuditLog(1)">&#8634; Refresh</button>
+          <span id="audit-page-info" style="color:var(--gray-500);font-size:0.875rem;"></span>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;">
+            <button class="btn btn-outline btn-sm" onclick="loadAuditLog(_auditPage - 1)" id="audit-prev-btn">&larr; Prev</button>
+            <button class="btn btn-outline btn-sm" onclick="loadAuditLog(_auditPage + 1)" id="audit-next-btn">Next &rarr;</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Time</th><th>Actor</th><th>Entity</th><th>Action</th><th>Detail</th></tr>
+              </thead>
+              <tbody id="audit-list-body">
+                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USER MANAGEMENT ── -->
+      <div id="section-users" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>User Management</h1>
+          <button class="btn btn-primary" id="add-admin-user-btn">+ Add Admin User</button>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Name</th><th>Mobile</th><th>Role</th><th>Status</th></tr>
+              </thead>
+              <tbody id="admin-users-body">
+                <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-panel-header">
+    <h4>Notifications</h4>
+    <button onclick="markAllRead()" class="btn btn-sm btn-ghost">Mark all read</button>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/static/js/common.js"></script>
+<script src="/static/js/admin/registrations.js"></script>
+<script src="/static/js/admin/dashboard.js"></script>
+</body>
+</html>
