@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Portal — Amar Alum</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/vendor.css">
+</head>
+<body>
+<div class="portal-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="company-name">Amar Alum &amp; Allied Chemicals</div>
+      <div class="portal-label">Vendor Portal</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item active" data-section="section-dashboard" data-label="Dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+
+      <div class="nav-section-label">Business</div>
+      <button class="nav-item" data-section="section-rfqs" data-label="Open RFQs">
+        <span class="nav-icon">📋</span> Open RFQs
+      </button>
+      <button class="nav-item" data-section="section-quotes" data-label="My Quotes">
+        <span class="nav-icon">💬</span> My Quotes
+      </button>
+      <button class="nav-item" data-section="section-pos" data-label="Purchase Orders">
+        <span class="nav-icon">📦</span> Purchase Orders
+      </button>
+      <button class="nav-item" data-section="section-invoices" data-label="Invoices">
+        <span class="nav-icon">🧾</span> Invoices
+      </button>
+      <button class="nav-item" data-section="section-payments" data-label="Payments">
+        <span class="nav-icon">💳</span> Payments
+      </button>
+
+      <div class="nav-section-label">Account</div>
+      <button class="nav-item" data-section="section-profile" data-label="Company Profile">
+        <span class="nav-icon">🏢</span> Company Profile
+      </button>
+      <button class="nav-item" data-section="section-documents" data-label="Documents">
+        <span class="nav-icon">📄</span> Documents
+      </button>
+      <button class="nav-item" data-section="section-banking" data-label="Banking Details">
+        <span class="nav-icon">🏦</span> Banking Details
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebar-avatar">V</div>
+        <div>
+          <div class="user-name" id="sidebar-name">Vendor</div>
+          <div class="user-role" id="sidebar-role">Vendor Admin</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="top-header">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <div class="header-title" id="page-title">Dashboard</div>
+      <div class="header-actions">
+        <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
+          🔔
+          <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- Registration Wizard (shown before approval) -->
+      <div id="reg-wizard-wrap" style="display:none;padding:1.5rem;">
+        <div class="empty-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Main Portal (shown after approval) -->
+      <div id="main-portal-wrap">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="section-dashboard" class="portal-section">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <span id="dash-date" style="color:var(--gray-400);font-size:.875rem"></span>
+        </div>
+
+        <!-- Pending registration banner -->
+        <div id="reg-pending-banner" class="alert alert-warning" style="display:none">
+          ⚠️ Your registration is <strong id="reg-status-label">pending review</strong>.
+          Some features may be limited until your account is approved.
+          <a href="#" onclick="showSection('section-profile');setActiveNav('section-profile')" style="margin-left:8px;font-weight:600">View Status →</a>
+        </div>
+
+        <div class="stats-grid" id="dash-stats">
+          <div class="stat-card">
+            <div class="stat-label">Open RFQs Available</div>
+            <div class="stat-value" id="stat-open-rfqs">—</div>
+            <div class="stat-sub">Available to quote</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-label">Active Quotes</div>
+            <div class="stat-value" id="stat-active-quotes">—</div>
+            <div class="stat-sub">Awaiting decision</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">POs Pending ACK</div>
+            <div class="stat-value" id="stat-pending-ack">—</div>
+            <div class="stat-sub">Need your acknowledgement</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Invoices Pending</div>
+            <div class="stat-value" id="stat-pending-inv">—</div>
+            <div class="stat-sub">Awaiting approval</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Payments This Month</div>
+            <div class="stat-value" id="stat-payments-month">—</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-label">Docs Expiring Soon</div>
+            <div class="stat-value" id="stat-docs-expiring">—</div>
+            <div class="stat-sub">⚠ Needs attention</div>
+          </div>
+        </div>
+
+        <!-- Recent activity -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Recent Activity</h3>
+          </div>
+          <div id="activity-feed" class="card-body">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <p>No recent activity to show</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPEN RFQs ── -->
+      <div id="section-rfqs" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>Open RFQs</h1>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div id="rfq-list-wrap">
+              <div class="empty-state"><div class="empty-icon">📋</div><p>No RFQs available</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MY QUOTES ── -->
+      <div id="section-quotes" class="portal-section" style="display:none">
+        <div class="page-header"><h1>My Quotes</h1></div>
+        <div class="card">
+          <div class="card-body">
+            <div id="quotes-list-wrap">
+              <div class="empty-state"><div class="empty-icon">💬</div><p>No quotes submitted yet</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PURCHASE ORDERS ── -->
+      <div id="section-pos" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Purchase Orders</h1></div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="pos-active">Active</button>
+          <button class="tab-btn" data-tab="pos-all">All POs</button>
+        </div>
+        <div class="tab-panel active" data-tab="pos-active">
+          <div class="card"><div class="card-body" id="pos-active-list">
+            <div class="empty-state"><div class="empty-icon">📦</div><p>No active POs</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="pos-all">
+          <div class="card"><div class="card-body" id="pos-all-list">
+            <div class="empty-state"><div class="empty-icon">📦</div><p>No POs yet</p></div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- ── INVOICES ── -->
+      <div id="section-invoices" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Invoices</h1></div>
+        <div class="card">
+          <div class="card-body" id="invoices-list">
+            <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices submitted yet</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAYMENTS ── -->
+      <div id="section-payments" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Payments</h1></div>
+        <div class="card">
+          <div class="card-body" id="payments-list">
+            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments recorded yet</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── COMPANY PROFILE ── -->
+      <div id="section-profile" class="portal-section" style="display:none">
+        <div class="page-header">
+          <h1>Company Profile</h1>
+          <span id="profile-status-badge"></span>
+        </div>
+        <div id="profile-content">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ── DOCUMENTS ── -->
+      <div id="section-documents" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Documents</h1></div>
+        <div id="documents-content">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ── BANKING ── -->
+      <div id="section-banking" class="portal-section" style="display:none">
+        <div class="page-header"><h1>Banking Details</h1></div>
+        <div id="banking-content">
+          <div class="empty-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      </div><!-- /main-portal-wrap -->
+
+    </main>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-panel-header">
+    <h4>Notifications</h4>
+    <button onclick="markAllRead()" class="btn btn-sm btn-ghost">Mark all read</button>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/static/js/common.js"></script>
+<script src="/static/js/vendor/registration.js"></script>
+<script src="/static/js/vendor/dashboard.js"></script>
+</body>
+</html>
