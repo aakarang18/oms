@@ -147,10 +147,28 @@ def api_logout():
 @login_required
 def api_me():
     u = g.user
+    name = None
+    conn = get_db()
+    try:
+        if u["entity_type"] == "vendor" and u["entity_id"]:
+            row = conn.execute(
+                "SELECT contact_name FROM vendors WHERE id=?", (u["entity_id"],)
+            ).fetchone()
+            if row:
+                name = row["contact_name"]
+        elif u["entity_type"] == "transporter" and u["entity_id"]:
+            row = conn.execute(
+                "SELECT contact_name FROM transporters WHERE id=?", (u["entity_id"],)
+            ).fetchone()
+            if row:
+                name = row["contact_name"]
+    finally:
+        conn.close()
     return jsonify({
         "id":          u["id"],
         "mobile":      u["mobile"],
         "email":       u["email"],
+        "name":        name,
         "role":        u["role"],
         "entity_type": u["entity_type"],
         "entity_id":   u["entity_id"],
