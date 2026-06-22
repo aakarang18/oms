@@ -869,3 +869,40 @@ tbody td:last-child { white-space: nowrap; }
   border-color: #fde68a;
   color: #92400e;
 }
+
+/* ── Form Control alias (maps class to existing input styles) ── */
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--gray-800);
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  appearance: none;
+}
+.form-control:focus {
+  border-color: var(--brand-mid);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+.form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  margin-bottom: 5px;
+}
+.form-label.required::after { content: ' *'; color: var(--danger); }
+.modal-box {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
