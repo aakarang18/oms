@@ -19,7 +19,6 @@ async function initTransporterPortal() {
   document.getElementById('dash-date').textContent =
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-  // Check registration status — show wizard for non-approved transporters
   try {
     const profile = await api('GET', '/api/transporter/profile');
     if (profile.status !== 'approved') {
@@ -80,10 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
     btn.addEventListener('click', () => {
       const sec = btn.dataset.section;
-      if (sec === 'section-dashboard')  loadTransporterDashboard();
+      if (sec === 'section-dashboard')         loadTransporterDashboard();
       else if (sec === 'section-trips')        loadTransporterTrips();
       else if (sec === 'section-rate-cards')   loadRateCards();
       else if (sec === 'section-fleet')        loadFleet();
+      else if (sec === 'section-invoices')     loadTransporterInvoices();
+      else if (sec === 'section-payments')     loadTransporterPayments();
     });
   });
 });

@@ -10,7 +10,6 @@ async function initVendorPortal() {
     return;
   }
 
-  // Populate sidebar
   const initials = (_vendorUser.name || _vendorUser.email || _vendorUser.mobile || 'V')[0].toUpperCase();
   document.getElementById('sidebar-avatar').textContent = initials;
   document.getElementById('sidebar-name').textContent   = _vendorUser.name || _vendorUser.email || _vendorUser.mobile;
@@ -20,7 +19,6 @@ async function initVendorPortal() {
   document.getElementById('dash-date').textContent =
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-  // Check registration status — show wizard for non-approved vendors
   try {
     const profile = await api('GET', '/api/vendor/profile');
     if (profile.status !== 'approved') {
@@ -30,7 +28,6 @@ async function initVendorPortal() {
       return;
     }
   } catch {
-    // If no vendor profile yet, show wizard
     document.getElementById('main-portal-wrap').style.display = 'none';
     document.getElementById('reg-wizard-wrap').style.display = '';
     await initRegistrationWizard();
@@ -96,14 +93,15 @@ function setActiveNav(sectionId) {
 document.addEventListener('DOMContentLoaded', () => {
   initVendorPortal();
 
-  // Wire nav items to also refresh data when switching sections
   document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
     btn.addEventListener('click', () => {
       const section = btn.dataset.section;
-      if (section === 'section-dashboard') loadVendorDashboard();
-      else if (section === 'section-rfqs')   loadVendorRFQs();
-      else if (section === 'section-quotes') loadVendorQuotes();
-      else if (section === 'section-pos')    loadVendorPOs();
+      if (section === 'section-dashboard')  loadVendorDashboard();
+      else if (section === 'section-rfqs')      loadVendorRFQs();
+      else if (section === 'section-quotes')    loadVendorQuotes();
+      else if (section === 'section-pos')       loadVendorPOs();
+      else if (section === 'section-invoices')  loadVendorInvoices();
+      else if (section === 'section-payments')  loadVendorPayments();
     });
   });
 });
