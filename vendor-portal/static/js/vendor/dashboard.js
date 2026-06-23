@@ -107,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (section === 'section-invoices')   loadVendorInvoices();
       else if (section === 'section-payments')   loadVendorPayments();
       else if (section === 'section-documents')  loadVendorDocuments();
+      else if (section === 'section-profile')    loadVendorProfile();
+      else if (section === 'section-banking')    loadVendorBanking();
     });
   });
 });

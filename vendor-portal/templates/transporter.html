@@ -69,7 +69,7 @@
 
   <div class="main-content">
     <header class="top-header">
-      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
       <div class="header-title" id="page-title">Dashboard</div>
       <div class="header-actions">
         <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
@@ -217,15 +217,22 @@
         </div>
       </div>
 
-      <!-- ── PROFILE / DOCS / BANKING ── -->
+      <!-- ── COMPANY PROFILE ── -->
       <div id="section-profile" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Company Profile</h1></div>
+        <div class="page-header">
+          <h1>Company Profile</h1>
+          <span id="profile-status-badge"></span>
+        </div>
         <div id="profile-content"><div class="empty-state"><div class="spinner"></div></div></div>
       </div>
+
+      <!-- ── DOCUMENTS ── -->
       <div id="section-documents" class="portal-section" style="display:none">
         <div class="page-header"><h1>Documents</h1></div>
         <div id="documents-content"><div class="empty-state"><div class="spinner"></div></div></div>
       </div>
+
+      <!-- ── BANKING ── -->
       <div id="section-banking" class="portal-section" style="display:none">
         <div class="page-header"><h1>Banking Details</h1></div>
         <div id="banking-content"><div class="empty-state"><div class="spinner"></div></div></div>
@@ -255,6 +262,7 @@
 <script src="/static/js/transporter/fleet.js"></script>
 <script src="/static/js/transporter/invoices.js"></script>
 <script src="/static/js/transporter/documents.js"></script>
+<script src="/static/js/transporter/profile.js"></script>
 <script src="/static/js/transporter/dashboard.js"></script>
 </body>
 </html>
