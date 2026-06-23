@@ -82,7 +82,7 @@ function renderActivityFeed(items) {
 function activityIcon(type) {
   const icons = {
     rfq: '📋', quote: '💬', po: '📦', invoice: '🧾',
-    payment: '💳', document: '📄', registration: '🏡',
+    payment: '💳', document: '📄', registration: '🏭',
   };
   return icons[type] || '📌';
 }
@@ -101,6 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const section = btn.dataset.section;
       if (section === 'section-dashboard') loadVendorDashboard();
+      else if (section === 'section-rfqs')   loadVendorRFQs();
+      else if (section === 'section-quotes') loadVendorQuotes();
     });
   });
 });

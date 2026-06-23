@@ -71,10 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
         _regCurrentTab = 'vendors';
         initAdminRegistrations();
       } else if (sec === 'section-transporter-reg') {
+        // Route to the shared registration panel
         showSection('section-vendor-reg');
         setActiveNav('section-vendor-reg');
         _regCurrentTab = 'transporters';
         initAdminRegistrations();
+      } else if (sec === 'section-rfqs') {
+        initAdminRFQs();
       } else if (sec === 'section-compliance') {
         initComplianceView();
       } else if (sec === 'section-audit') {
