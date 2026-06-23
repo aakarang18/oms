@@ -24,7 +24,7 @@
 
       <div class="nav-section-label">Onboarding</div>
       <button class="nav-item" data-section="section-vendor-reg" data-label="Vendor Registrations">
-        <span class="nav-icon">🏡</span> Vendor Registrations
+        <span class="nav-icon">🏭</span> Vendor Registrations
       </button>
       <button class="nav-item" data-section="section-transporter-reg" data-label="Transporter Registrations">
         <span class="nav-icon">🚛</span> Transporter Registrations
@@ -143,7 +143,7 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px">
           <div class="card" style="cursor:pointer" onclick="showSection('section-vendor-reg');setActiveNav('section-vendor-reg')">
             <div class="card-body" style="display:flex;align-items:center;gap:16px">
-              <div style="font-size:2rem">🏡</div>
+              <div style="font-size:2rem">🏭</div>
               <div>
                 <div style="font-weight:600;color:var(--gray-800)">Review Vendor Registrations</div>
                 <div style="font-size:.8rem;color:var(--gray-500);margin-top:2px">Approve, reject or request info</div>
@@ -242,13 +242,11 @@
         </div>
       </div>
 
-      <!-- ── QUOTES ── -->
+      <!-- Remaining sections -->
       <div id="section-quotes" class="portal-section" style="display:none">
         <div class="page-header"><h1>Quote Comparison</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">💬</div><p>Select a closed RFQ to compare quotes</p></div></div></div>
       </div>
-
-      <!-- ── PURCHASE ORDERS ── -->
       <div id="section-pos" class="portal-section" style="display:none">
         <div class="page-header"><h1>Purchase Orders</h1></div>
         <div class="tabs">
@@ -278,57 +276,38 @@
           </div></div>
         </div>
       </div>
-
-      <!-- ── GRN (redirect notice) ── -->
       <div id="section-grns" class="portal-section" style="display:none">
         <div class="page-header"><h1>Goods Receipt Notes</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">✅</div><p>Go to Purchase Orders → Dispatched tab to record a GRN</p></div></div></div>
       </div>
-
-      <!-- ── ROUTES ── -->
       <div id="section-routes" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Route Master</h1>
-          <button class="btn btn-primary" onclick="openCreateRouteModal()">+ Add Route</button>
+          <button class="btn btn-primary" onclick="openModal('modal-create-route')">+ Add Route</button>
         </div>
-        <div class="card"><div class="card-body" id="routes-list">
-          <div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined</p></div>
-        </div></div>
+        <div class="card"><div class="card-body" id="routes-list"><div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined</p></div></div></div>
       </div>
-
-      <!-- ── RATE APPROVALS ── -->
       <div id="section-rate-approval" class="portal-section" style="display:none">
         <div class="page-header"><h1>Rate Card Approvals</h1></div>
-        <div class="card"><div class="card-body" id="rate-approval-list">
-          <div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div>
-        </div></div>
+        <div class="card"><div class="card-body" id="rate-approval-list"><div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div></div></div>
       </div>
-
-      <!-- ── TRIPS ── -->
       <div id="section-trips" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Trip Management</h1>
-          <button class="btn btn-primary" onclick="openPostTripModal()">+ Post Trip</button>
+          <button class="btn btn-primary" onclick="openModal('modal-post-trip')">+ Post Trip</button>
         </div>
-        <div class="card"><div class="card-body" id="admin-trips-list">
-          <div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div>
-        </div></div>
+        <div class="card"><div class="card-body" id="admin-trips-list"><div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div></div></div>
       </div>
-
-      <!-- ── INVOICES ── -->
       <div id="section-invoices" class="portal-section" style="display:none">
         <div class="page-header"><h1>Invoice Review</h1></div>
-        <div class="card"><div class="card-body" id="admin-invoices-list">
-          <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices pending</p></div>
-        </div></div>
+        <div class="card"><div class="card-body" id="admin-invoices-list"><div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices pending</p></div></div></div>
       </div>
-
-      <!-- ── PAYMENTS ── -->
       <div id="section-payments" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Payment Recording</h1></div>
-        <div class="card"><div class="card-body" id="admin-payments-list">
-          <div class="empty-state"><div class="empty-icon">💳</div><p>No approved invoices pending payment</p></div>
-        </div></div>
+        <div class="page-header">
+          <h1>Payment Recording</h1>
+          <button class="btn btn-primary" onclick="openRecordPaymentModal()">+ Record Payment</button>
+        </div>
+        <div class="card"><div class="card-body" id="admin-payments-list"><div class="empty-state"><div class="empty-icon">💳</div><p>No approved invoices pending payment</p></div></div></div>
       </div>
 
       <!-- ── COMPLIANCE ── -->
@@ -341,13 +320,13 @@
             <option value="expiring_soon">Expiring Soon (30d)</option>
             <option value="valid">Valid</option>
           </select>
-          <button class="btn btn-outline btn-sm" onclick="loadComplianceData()">↺ Refresh</button>
+          <button class="btn btn-outline btn-sm" onclick="loadComplianceData()">&#8635; Refresh</button>
         </div>
         <div class="card">
           <div class="card-body" style="padding:0;">
             <table class="data-table">
               <thead>
-                <tr><th>Entity Type</th><th>Entity</th><th>Document</th><th>Expiry Date</th><th>Status</th><th>View</th></tr>
+                <tr><th>Entity Type</th><th>Entity</th><th>Document</th><th>Expiry Date</th><th>Status</th><th>File</th></tr>
               </thead>
               <tbody id="compliance-list-body">
                 <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
@@ -367,11 +346,10 @@
             <option value="transporter">Transporter</option>
             <option value="rfq">RFQ</option>
             <option value="po">PO</option>
-            <option value="trip">Trip</option>
             <option value="invoice">Invoice</option>
             <option value="payment">Payment</option>
           </select>
-          <button class="btn btn-outline btn-sm" onclick="loadAuditLog(1)">↺ Refresh</button>
+          <button class="btn btn-outline btn-sm" onclick="loadAuditLog(1)">&#8635; Refresh</button>
           <span id="audit-page-info" style="color:var(--gray-500);font-size:0.875rem;"></span>
           <div style="margin-left:auto;display:flex;gap:0.5rem;">
             <button class="btn btn-outline btn-sm" onclick="loadAuditLog(_auditPage - 1)" id="audit-prev-btn">← Prev</button>
@@ -432,6 +410,8 @@
 <script src="/static/js/admin/rfq.js"></script>
 <script src="/static/js/admin/po.js"></script>
 <script src="/static/js/admin/trips.js"></script>
+<script src="/static/js/admin/invoices.js"></script>
+<script src="/static/js/admin/compliance.js"></script>
 <script src="/static/js/admin/dashboard.js"></script>
 </body>
 </html>

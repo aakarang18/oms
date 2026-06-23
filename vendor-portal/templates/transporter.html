@@ -172,7 +172,7 @@
       <div id="section-rate-cards" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Rate Cards</h1>
-          <button class="btn btn-primary" onclick="openAddRateCardModal()">+ Add Rate Card</button>
+          <button class="btn btn-primary" onclick="openModal('modal-add-rate')">+ Add Rate Card</button>
         </div>
         <div class="card">
           <div class="card-body" id="rate-cards-list">
@@ -185,7 +185,7 @@
       <div id="section-fleet" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Fleet Management</h1>
-          <button class="btn btn-primary" onclick="openAddVehicleModal()">+ Add Vehicle</button>
+          <button class="btn btn-primary" onclick="openModal('modal-add-vehicle')">+ Add Vehicle</button>
         </div>
         <div class="card">
           <div class="card-body" id="fleet-list">
@@ -196,7 +196,10 @@
 
       <!-- ── INVOICES ── -->
       <div id="section-invoices" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Invoices</h1></div>
+        <div class="page-header">
+          <h1>Invoices</h1>
+          <button class="btn btn-primary" onclick="openSubmitTransporterInvoiceModal()">+ Submit Invoice</button>
+        </div>
         <div class="card">
           <div class="card-body" id="invoices-list">
             <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet</p></div>
@@ -209,7 +212,7 @@
         <div class="page-header"><h1>Payments</h1></div>
         <div class="card">
           <div class="card-body" id="payments-list">
-            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments recorded yet</p></div>
+            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments received yet</p></div>
           </div>
         </div>
       </div>
@@ -250,6 +253,8 @@
 <script src="/static/js/transporter/trips.js"></script>
 <script src="/static/js/transporter/rate_cards.js"></script>
 <script src="/static/js/transporter/fleet.js"></script>
+<script src="/static/js/transporter/invoices.js"></script>
+<script src="/static/js/transporter/documents.js"></script>
 <script src="/static/js/transporter/dashboard.js"></script>
 </body>
 </html>

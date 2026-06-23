@@ -13,7 +13,7 @@
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="company-name">Amar Alum & Allied Chemicals</div>
+      <div class="company-name">Amar Alum &amp; Allied Chemicals</div>
       <div class="portal-label">Vendor Portal</div>
     </div>
 
@@ -67,7 +67,7 @@
   <!-- Main -->
   <div class="main-content">
     <header class="top-header">
-      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
       <div class="header-title" id="page-title">Dashboard</div>
       <div class="header-actions">
         <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
@@ -194,7 +194,10 @@
 
       <!-- ── INVOICES ── -->
       <div id="section-invoices" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Invoices</h1></div>
+        <div class="page-header">
+          <h1>Invoices</h1>
+          <button class="btn btn-primary" onclick="openSubmitInvoiceModal()">+ Submit Invoice</button>
+        </div>
         <div class="card">
           <div class="card-body" id="invoices-list">
             <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices submitted yet</p></div>
@@ -207,7 +210,7 @@
         <div class="page-header"><h1>Payments</h1></div>
         <div class="card">
           <div class="card-body" id="payments-list">
-            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments recorded yet</p></div>
+            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments received yet</p></div>
           </div>
         </div>
       </div>
@@ -260,6 +263,8 @@
 <script src="/static/js/vendor/registration.js"></script>
 <script src="/static/js/vendor/rfq.js"></script>
 <script src="/static/js/vendor/po.js"></script>
+<script src="/static/js/vendor/invoices.js"></script>
+<script src="/static/js/vendor/documents.js"></script>
 <script src="/static/js/vendor/dashboard.js"></script>
 </body>
 </html>
