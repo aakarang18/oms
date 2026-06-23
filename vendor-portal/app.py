@@ -23,18 +23,22 @@ from sms_service import send_otp as send_otp_sms
 from routes.vendor_reg import bp as vendor_reg_bp
 from routes.transporter_reg import bp as transporter_reg_bp
 from routes.admin_reg import bp as admin_reg_bp
+from routes.rfq import bp as rfq_bp
+from routes.admin_rfq import bp as admin_rfq_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB max upload
 
-# ─── Init ────────────────────────────────────────────────────────────────────────────────
+# ─── Init ─────────────────────────────────────────────────────────────────────────────────
 init_db()
 init_mail(app)
 
 app.register_blueprint(vendor_reg_bp)
 app.register_blueprint(transporter_reg_bp)
 app.register_blueprint(admin_reg_bp)
+app.register_blueprint(rfq_bp)
+app.register_blueprint(admin_rfq_bp)
 
 # Start scheduler only in main process (not reloader child)
 if os.environ.get("WERKZEUG_RUN_MAIN") != "false":
@@ -45,7 +49,7 @@ if os.environ.get("WERKZEUG_RUN_MAIN") != "false":
         print(f"[Scheduler] Failed to start: {e}")
 
 
-# ─── Auth API ─────────────────────────────────────────────────────────────────────────────
+# ─── Auth API ─────────────────────────────────────────────────────────────────────────
 
 @app.post("/api/auth/request-otp")
 def api_request_otp():
@@ -175,7 +179,7 @@ def api_me():
     })
 
 
-# ─── Portal Shell Routes ─────────────────────────────────────────────────────────────────────────────
+# ─── Portal Shell Routes ────────────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def landing():
@@ -205,7 +209,7 @@ def admin_portal():
     return render_template("admin.html", user=g.user)
 
 
-# ─── Vendor Registration (pre-auth flow) ──────────────────────────────────────────────────────────────
+# ─── Vendor Registration (pre-auth flow) ───────────────────────────────────────────────────
 
 @app.post("/api/register/vendor/init")
 def api_vendor_register_init():
@@ -376,7 +380,7 @@ def api_transporter_verify_otp():
     return resp
 
 
-# ─── Notification API ───────────────────────────────────────────────────────────────────────────
+# ─── Notification API ─────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/notifications")
 @login_required
@@ -433,7 +437,7 @@ def api_mark_all_read():
     return jsonify({"ok": True})
 
 
-# ─── Admin: seed super_admin (only if no admin exists) ──────────────────────────────────────────────
+# ─── Admin: seed super_admin (only if no admin exists) ─────────────────────────────────────────────
 
 @app.post("/api/setup/admin")
 def api_setup_admin():
@@ -468,7 +472,7 @@ def api_setup_admin():
         conn.close()
 
 
-# ─── Dashboard APIs ──────────────────────────────────────────────────────────────────────────────
+# ─── Dashboard APIs ─────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/vendor/dashboard")
 @vendor_required
@@ -665,7 +669,7 @@ def api_admin_dashboard():
         conn.close()
 
 
-# ─── Error Handlers ───────────────────────────────────────────────────────────────────────────────
+# ─── Error Handlers ────────────────────────────────────────────────────────────────────────────
 
 @app.errorhandler(403)
 def forbidden(e):
