@@ -240,20 +240,49 @@
         </div>
       </div>
 
-      <!-- Remaining sections — placeholders for Phase 2+ -->
-      <div id="section-quotes"       class="portal-section" style="display:none">
+      <!-- Remaining sections -->
+      <div id="section-quotes" class="portal-section" style="display:none">
         <div class="page-header"><h1>Quote Comparison</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">💬</div><p>Select a closed RFQ to compare quotes</p></div></div></div>
       </div>
-      <div id="section-pos"          class="portal-section" style="display:none">
+
+      <!-- ── PURCHASE ORDERS ── -->
+      <div id="section-pos" class="portal-section" style="display:none">
         <div class="page-header"><h1>Purchase Orders</h1></div>
-        <div class="card"><div class="card-body" id="admin-pos-list"><div class="empty-state"><div class="empty-icon">📦</div><p>No POs yet</p></div></div></div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="po-generated">Pending ACK</button>
+          <button class="tab-btn" data-tab="po-acknowledged">Acknowledged</button>
+          <button class="tab-btn" data-tab="po-dispatched">Dispatched</button>
+          <button class="tab-btn" data-tab="po-grn">GRN Received</button>
+        </div>
+        <div class="tab-panel active" data-tab="po-generated">
+          <div class="card"><div class="card-body" id="po-generated-list">
+            <div class="empty-state"><div class="empty-icon">📦</div><p>No POs pending acknowledgement</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="po-acknowledged">
+          <div class="card"><div class="card-body" id="po-acknowledged-list">
+            <div class="empty-state"><div class="empty-icon">📦</div><p>No acknowledged POs</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="po-dispatched">
+          <div class="card"><div class="card-body" id="po-dispatched-list">
+            <div class="empty-state"><div class="empty-icon">🚚</div><p>No dispatched POs</p></div>
+          </div></div>
+        </div>
+        <div class="tab-panel" data-tab="po-grn">
+          <div class="card"><div class="card-body" id="po-grn-list">
+            <div class="empty-state"><div class="empty-icon">✅</div><p>No GRNs recorded</p></div>
+          </div></div>
+        </div>
       </div>
-      <div id="section-grns"         class="portal-section" style="display:none">
+
+      <div id="section-grns" class="portal-section" style="display:none">
         <div class="page-header"><h1>Goods Receipt Notes</h1></div>
-        <div class="card"><div class="card-body" id="admin-grn-list"><div class="empty-state"><div class="empty-icon">✅</div><p>No GRNs yet</p></div></div></div>
+        <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">✅</div><p>Go to Purchase Orders → Dispatched tab to record a GRN</p></div></div></div>
       </div>
-      <div id="section-routes"       class="portal-section" style="display:none">
+
+      <div id="section-routes" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Route Master</h1>
           <button class="btn btn-primary" onclick="openModal('modal-create-route')">+ Add Route</button>
@@ -264,18 +293,18 @@
         <div class="page-header"><h1>Rate Card Approvals</h1></div>
         <div class="card"><div class="card-body" id="rate-approval-list"><div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div></div></div>
       </div>
-      <div id="section-trips"        class="portal-section" style="display:none">
+      <div id="section-trips" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Trip Management</h1>
           <button class="btn btn-primary" onclick="openModal('modal-post-trip')">+ Post Trip</button>
         </div>
         <div class="card"><div class="card-body" id="admin-trips-list"><div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div></div></div>
       </div>
-      <div id="section-invoices"     class="portal-section" style="display:none">
+      <div id="section-invoices" class="portal-section" style="display:none">
         <div class="page-header"><h1>Invoice Review</h1></div>
         <div class="card"><div class="card-body" id="admin-invoices-list"><div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices pending</p></div></div></div>
       </div>
-      <div id="section-payments"     class="portal-section" style="display:none">
+      <div id="section-payments" class="portal-section" style="display:none">
         <div class="page-header"><h1>Payment Recording</h1></div>
         <div class="card"><div class="card-body" id="admin-payments-list"><div class="empty-state"><div class="empty-icon">💳</div><p>No approved invoices pending payment</p></div></div></div>
       </div>
@@ -378,6 +407,7 @@
 <script src="/static/js/common.js"></script>
 <script src="/static/js/admin/registrations.js"></script>
 <script src="/static/js/admin/rfq.js"></script>
+<script src="/static/js/admin/po.js"></script>
 <script src="/static/js/admin/dashboard.js"></script>
 </body>
 </html>

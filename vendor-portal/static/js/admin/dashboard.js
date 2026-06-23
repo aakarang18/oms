@@ -78,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
         initAdminRegistrations();
       } else if (sec === 'section-rfqs') {
         initAdminRFQs();
+      } else if (sec === 'section-pos') {
+        initAdminPOs();
       } else if (sec === 'section-compliance') {
         initComplianceView();
       } else if (sec === 'section-audit') {

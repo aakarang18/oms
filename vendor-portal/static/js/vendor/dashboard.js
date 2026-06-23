@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (section === 'section-dashboard') loadVendorDashboard();
       else if (section === 'section-rfqs')   loadVendorRFQs();
       else if (section === 'section-quotes') loadVendorQuotes();
+      else if (section === 'section-pos')    loadVendorPOs();
     });
   });
 });
