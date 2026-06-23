@@ -19,6 +19,7 @@ async function initTransporterPortal() {
   document.getElementById('dash-date').textContent =
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
+  // Check registration status — show wizard for non-approved transporters
   try {
     const profile = await api('GET', '/api/transporter/profile');
     if (profile.status !== 'approved') {
@@ -85,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (sec === 'section-fleet')        loadFleet();
       else if (sec === 'section-invoices')     loadTransporterInvoices();
       else if (sec === 'section-payments')     loadTransporterPayments();
+      else if (sec === 'section-documents')    loadTransporterDocuments();
     });
   });
 });

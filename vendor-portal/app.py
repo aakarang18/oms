@@ -1,4 +1,5 @@
-"""Amar Alum Vendor & Transporter Portal — Main Flask Application
+"""
+Amar Alum Vendor & Transporter Portal — Main Flask Application
 Port: 5002  (separate from main ERP)
 """
 import os
@@ -33,13 +34,13 @@ from routes.admin_trips import bp as admin_trips_bp
 from routes.vendor_invoices import bp as vendor_invoices_bp
 from routes.transporter_invoices import bp as transporter_invoices_bp
 from routes.admin_invoices import bp as admin_invoices_bp
+from routes.admin_compliance import bp as admin_compliance_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB max upload
 
-# ─── Init ──────────────────────────────────────────────────────────────────────────────
-ini_db = init_db
+# ─── Init ──────────────────────────────────────────────────────────────────────
 init_db()
 init_mail(app)
 
@@ -57,6 +58,7 @@ app.register_blueprint(admin_trips_bp)
 app.register_blueprint(vendor_invoices_bp)
 app.register_blueprint(transporter_invoices_bp)
 app.register_blueprint(admin_invoices_bp)
+app.register_blueprint(admin_compliance_bp)
 
 # Start scheduler only in main process (not reloader child)
 if os.environ.get("WERKZEUG_RUN_MAIN") != "false":
@@ -67,7 +69,7 @@ if os.environ.get("WERKZEUG_RUN_MAIN") != "false":
         print(f"[Scheduler] Failed to start: {e}")
 
 
-# ─── Auth API ─────────────────────────────────────────────────────────────────────────────
+# ─── Auth API ─────────────────────────────────────────────────────────────────
 
 @app.post("/api/auth/request-otp")
 def api_request_otp():
@@ -95,6 +97,7 @@ def api_request_otp():
 
     otp = create_otp(user["id"], "login")
 
+    # Deliver OTP
     sent_sms = send_otp_sms(mobile, otp)
     if user["email"]:
         subj, html = email_otp(otp)
@@ -149,7 +152,7 @@ def api_verify_otp():
     resp.set_cookie(
         "portal_session", token,
         httponly=True, samesite="Lax",
-        max_age=1800
+        max_age=1800  # 30 min
     )
     return resp
 
@@ -196,7 +199,7 @@ def api_me():
     })
 
 
-# ─── Portal Shell Routes ─────────────────────────────────────────────────────────────────────
+# ─── Portal Shell Routes ───────────────────────────────────────────────────────
 
 @app.get("/")
 def landing():
@@ -226,10 +229,11 @@ def admin_portal():
     return render_template("admin.html", user=g.user)
 
 
-# ─── Vendor Registration (pre-auth flow) ────────────────────────────────────────────────
+# ─── Vendor Registration (pre-auth flow) ─────────────────────────────────────
 
 @app.post("/api/register/vendor/init")
 def api_vendor_register_init():
+    """Step 0: start registration — create user + vendor draft."""
     data = request.get_json(silent=True) or {}
     mobile = (data.get("mobile") or "").strip()
     email  = (data.get("email") or "").strip() or None
@@ -248,6 +252,10 @@ def api_vendor_register_init():
         now = datetime.utcnow().isoformat()
         vendor_id = new_id()
         user_id   = new_id()
+
+        draft_expires = (datetime.utcnow().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ).__class__.utcnow()).isoformat()  # placeholder; set properly below
 
         from datetime import timedelta
         draft_expires = (datetime.utcnow() + timedelta(days=30)).isoformat()
@@ -298,7 +306,9 @@ def api_vendor_verify_otp():
 
     conn = get_db()
     try:
-        conn.execute("UPDATE users SET is_active=1 WHERE id=?", (user_id,))
+        conn.execute(
+            "UPDATE users SET is_active=1 WHERE id=?", (user_id,)
+        )
         conn.commit()
     finally:
         conn.close()
@@ -390,7 +400,7 @@ def api_transporter_verify_otp():
     return resp
 
 
-# ─── Notification API ──────────────────────────────────────────────────────────────────────────
+# ─── Notification API ─────────────────────────────────────────────────────────
 
 @app.get("/api/notifications")
 @login_required
@@ -447,10 +457,12 @@ def api_mark_all_read():
     return jsonify({"ok": True})
 
 
-# ─── Admin: seed super_admin ─────────────────────────────────────────────────────────────────
+# ─── Admin: seed super_admin (only if no admin exists) ───────────────────────
 
 @app.post("/api/setup/admin")
 def api_setup_admin():
+    """One-time setup endpoint to create the first super_admin.
+    Disabled once any admin exists."""
     conn = get_db()
     try:
         existing = conn.execute(
@@ -480,7 +492,7 @@ def api_setup_admin():
         conn.close()
 
 
-# ─── Dashboard APIs ──────────────────────────────────────────────────────────────────────────
+# ─── Dashboard APIs ───────────────────────────────────────────────────────────
 
 @app.get("/api/vendor/dashboard")
 @vendor_required
@@ -532,6 +544,7 @@ def api_vendor_dashboard():
 
         vendor = conn.execute("SELECT status FROM vendors WHERE id=?", (vendor_id,)).fetchone()
 
+        # Recent activity from notifications
         notifs = conn.execute(
             """SELECT title as message, event_type as type, created_at as time
                FROM notifications WHERE user_id=? AND channel='in_app'
@@ -676,7 +689,7 @@ def api_admin_dashboard():
         conn.close()
 
 
-# ─── Error Handlers ───────────────────────────────────────────────────────────────────────────
+# ─── Error Handlers ───────────────────────────────────────────────────────────
 
 @app.errorhandler(403)
 def forbidden(e):

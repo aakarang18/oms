@@ -533,3 +533,23 @@ def vendor_resubmit():
         return jsonify({"message": "Resubmitted for review"})
     finally:
         conn.close()
+
+
+# ── Vendor Documents list ─────────────────────────────────────────────────────
+
+@bp.get("/api/vendor/documents")
+@vendor_required
+def vendor_documents():
+    vid = g.user["entity_id"]
+    conn = get_db()
+    try:
+        docs = conn.execute(
+            """SELECT id, doc_type, file_name, file_size_bytes, is_mandatory,
+                      expiry_date, expiry_status, uploaded_at
+               FROM vendor_documents WHERE vendor_id=? AND is_deleted=0
+               ORDER BY uploaded_at DESC""",
+            (vid,)
+        ).fetchall()
+        return jsonify([dict(r) for r in docs])
+    finally:
+        conn.close()
