@@ -12,7 +12,7 @@
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="company-name">Amar Alum & Allied Chemicals</div>
+      <div class="company-name">Amar Alum &amp; Allied Chemicals</div>
       <div class="portal-label">Admin Portal</div>
     </div>
 
@@ -24,7 +24,7 @@
 
       <div class="nav-section-label">Onboarding</div>
       <button class="nav-item" data-section="section-vendor-reg" data-label="Vendor Registrations">
-        <span class="nav-icon">🏭</span> Vendor Registrations
+        <span class="nav-icon">🏡</span> Vendor Registrations
       </button>
       <button class="nav-item" data-section="section-transporter-reg" data-label="Transporter Registrations">
         <span class="nav-icon">🚛</span> Transporter Registrations
@@ -63,15 +63,17 @@
         <span class="nav-icon">💳</span> Payments
       </button>
 
-      <div class="nav-section-label">Governance</div>
-      <button class="nav-item" data-section="section-compliance" data-label="Compliance">
+      <div class="nav-section-label">Compliance</div>
+      <button class="nav-item" data-section="section-compliance" data-label="Compliance Dashboard">
         <span class="nav-icon">🔴</span> Compliance
       </button>
       <button class="nav-item" data-section="section-audit" data-label="Audit Log">
-        <span class="nav-icon">📜</span> Audit Log
+        <span class="nav-icon">📝</span> Audit Log
       </button>
+
+      <div class="nav-section-label">Admin</div>
       <button class="nav-item" data-section="section-users" data-label="User Management">
-        <span class="nav-icon">👤</span> Users
+        <span class="nav-icon">👥</span> Users
       </button>
     </nav>
 
@@ -80,7 +82,7 @@
         <div class="user-avatar" id="sidebar-avatar">A</div>
         <div>
           <div class="user-name" id="sidebar-name">Admin</div>
-          <div class="user-role" id="sidebar-role">Administrator</div>
+          <div class="user-role" id="sidebar-role">Super Admin</div>
         </div>
       </div>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
@@ -89,7 +91,7 @@
 
   <div class="main-content">
     <header class="top-header">
-      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
       <div class="header-title" id="page-title">Admin Dashboard</div>
       <div class="header-actions">
         <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
@@ -141,7 +143,7 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px">
           <div class="card" style="cursor:pointer" onclick="showSection('section-vendor-reg');setActiveNav('section-vendor-reg')">
             <div class="card-body" style="display:flex;align-items:center;gap:16px">
-              <div style="font-size:2rem">🏭</div>
+              <div style="font-size:2rem">🏡</div>
               <div>
                 <div style="font-weight:600;color:var(--gray-800)">Review Vendor Registrations</div>
                 <div style="font-size:.8rem;color:var(--gray-500);margin-top:2px">Approve, reject or request info</div>
@@ -240,7 +242,7 @@
         </div>
       </div>
 
-      <!-- Remaining sections -->
+      <!-- ── QUOTES ── -->
       <div id="section-quotes" class="portal-section" style="display:none">
         <div class="page-header"><h1>Quote Comparison</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">💬</div><p>Select a closed RFQ to compare quotes</p></div></div></div>
@@ -277,36 +279,56 @@
         </div>
       </div>
 
+      <!-- ── GRN (redirect notice) ── -->
       <div id="section-grns" class="portal-section" style="display:none">
         <div class="page-header"><h1>Goods Receipt Notes</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">✅</div><p>Go to Purchase Orders → Dispatched tab to record a GRN</p></div></div></div>
       </div>
 
+      <!-- ── ROUTES ── -->
       <div id="section-routes" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Route Master</h1>
-          <button class="btn btn-primary" onclick="openModal('modal-create-route')">+ Add Route</button>
+          <button class="btn btn-primary" onclick="openCreateRouteModal()">+ Add Route</button>
         </div>
-        <div class="card"><div class="card-body" id="routes-list"><div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined</p></div></div></div>
+        <div class="card"><div class="card-body" id="routes-list">
+          <div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined</p></div>
+        </div></div>
       </div>
+
+      <!-- ── RATE APPROVALS ── -->
       <div id="section-rate-approval" class="portal-section" style="display:none">
         <div class="page-header"><h1>Rate Card Approvals</h1></div>
-        <div class="card"><div class="card-body" id="rate-approval-list"><div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div></div></div>
+        <div class="card"><div class="card-body" id="rate-approval-list">
+          <div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div>
+        </div></div>
       </div>
+
+      <!-- ── TRIPS ── -->
       <div id="section-trips" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Trip Management</h1>
-          <button class="btn btn-primary" onclick="openModal('modal-post-trip')">+ Post Trip</button>
+          <button class="btn btn-primary" onclick="openPostTripModal()">+ Post Trip</button>
         </div>
-        <div class="card"><div class="card-body" id="admin-trips-list"><div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div></div></div>
+        <div class="card"><div class="card-body" id="admin-trips-list">
+          <div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div>
+        </div></div>
       </div>
+
+      <!-- ── INVOICES ── -->
       <div id="section-invoices" class="portal-section" style="display:none">
         <div class="page-header"><h1>Invoice Review</h1></div>
-        <div class="card"><div class="card-body" id="admin-invoices-list"><div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices pending</p></div></div></div>
+        <div class="card"><div class="card-body" id="admin-invoices-list">
+          <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices pending</p></div>
+        </div></div>
       </div>
+
+      <!-- ── PAYMENTS ── -->
       <div id="section-payments" class="portal-section" style="display:none">
         <div class="page-header"><h1>Payment Recording</h1></div>
-        <div class="card"><div class="card-body" id="admin-payments-list"><div class="empty-state"><div class="empty-icon">💳</div><p>No approved invoices pending payment</p></div></div></div>
+        <div class="card"><div class="card-body" id="admin-payments-list">
+          <div class="empty-state"><div class="empty-icon">💳</div><p>No approved invoices pending payment</p></div>
+        </div></div>
       </div>
 
       <!-- ── COMPLIANCE ── -->
@@ -345,6 +367,7 @@
             <option value="transporter">Transporter</option>
             <option value="rfq">RFQ</option>
             <option value="po">PO</option>
+            <option value="trip">Trip</option>
             <option value="invoice">Invoice</option>
             <option value="payment">Payment</option>
           </select>
@@ -359,9 +382,9 @@
           <div class="card-body" style="padding:0;">
             <table class="data-table">
               <thead>
-                <tr><th>Time</th><th>Entity</th><th>Action</th><th>By</th><th>Details</th></tr>
+                <tr><th>Time</th><th>Actor</th><th>Entity</th><th>Action</th><th>Detail</th></tr>
               </thead>
-              <tbody id="audit-log-body">
+              <tbody id="audit-list-body">
                 <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</td></tr>
               </tbody>
             </table>
@@ -373,7 +396,7 @@
       <div id="section-users" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>User Management</h1>
-          <button class="btn btn-primary" onclick="openModal('modal-invite-user')">+ Invite User</button>
+          <button class="btn btn-primary" id="add-admin-user-btn">+ Add Admin User</button>
         </div>
         <div class="card">
           <div class="card-body" style="padding:0;">
@@ -408,6 +431,7 @@
 <script src="/static/js/admin/registrations.js"></script>
 <script src="/static/js/admin/rfq.js"></script>
 <script src="/static/js/admin/po.js"></script>
+<script src="/static/js/admin/trips.js"></script>
 <script src="/static/js/admin/dashboard.js"></script>
 </body>
 </html>

@@ -172,7 +172,7 @@
       <div id="section-rate-cards" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Rate Cards</h1>
-          <button class="btn btn-primary" onclick="openModal('modal-add-rate')">+ Add Rate Card</button>
+          <button class="btn btn-primary" onclick="openAddRateCardModal()">+ Add Rate Card</button>
         </div>
         <div class="card">
           <div class="card-body" id="rate-cards-list">
@@ -185,7 +185,7 @@
       <div id="section-fleet" class="portal-section" style="display:none">
         <div class="page-header">
           <h1>Fleet Management</h1>
-          <button class="btn btn-primary" onclick="openModal('modal-add-vehicle')">+ Add Vehicle</button>
+          <button class="btn btn-primary" onclick="openAddVehicleModal()">+ Add Vehicle</button>
         </div>
         <div class="card">
           <div class="card-body" id="fleet-list">
@@ -214,7 +214,7 @@
         </div>
       </div>
 
-      <!-- ── PROFILE / DOCS / BANKING (placeholders for Phase 1) ── -->
+      <!-- ── PROFILE / DOCS / BANKING ── -->
       <div id="section-profile" class="portal-section" style="display:none">
         <div class="page-header"><h1>Company Profile</h1></div>
         <div id="profile-content"><div class="empty-state"><div class="spinner"></div></div></div>
@@ -247,6 +247,9 @@
 
 <script src="/static/js/common.js"></script>
 <script src="/static/js/transporter/registration.js"></script>
+<script src="/static/js/transporter/trips.js"></script>
+<script src="/static/js/transporter/rate_cards.js"></script>
+<script src="/static/js/transporter/fleet.js"></script>
 <script src="/static/js/transporter/dashboard.js"></script>
 </body>
 </html>

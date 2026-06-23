@@ -1,4 +1,3 @@
-'use strict'
 from flask import Blueprint, g, request, jsonify
 from database import get_db
 from auth import transporter_required, audit, new_id
@@ -23,13 +22,10 @@ def list_transporter_trips():
         """
         params = [tid]
         if status:
-            if ',' in status:
-                placeholders = ','.join('?' for _ in status.split(','))
-                q += f' AND t.status IN ({placeholders})'
-                params.extend(status.split(','))
-            else:
-                q += ' AND t.status = ?'
-                params.append(status)
+            statuses = status.split(',')
+            placeholders = ','.join('?' for _ in statuses)
+            q += f' AND t.status IN ({placeholders})'
+            params.extend(statuses)
         q += ' ORDER BY t.created_at DESC'
         rows = conn.execute(q, params).fetchall()
         return jsonify([dict(r) for r in rows])
