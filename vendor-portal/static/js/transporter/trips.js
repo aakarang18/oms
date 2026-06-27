@@ -3,274 +3,199 @@
 async function loadTransporterTrips() {
   await Promise.all([
     loadTripTab('assigned', 'trips-assigned-list'),
-    loadTripTab('accepted,loaded,in_transit', 'trips-active-list'),
-    loadTripTab('delivered', 'trips-pod-list'),
-    loadAllTrips(),
+    loadTripTab('active',   'trips-active-list'),
+    loadTripTab('pod',      'trips-pod-list'),
+    loadTripTab('all',      'trips-all-list'),
   ]);
+
   document.querySelectorAll('#section-trips .tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tabMap = {
         'trips-assigned': 'assigned',
-        'trips-active':   'accepted,loaded,in_transit',
-        'trips-pod':      'delivered',
+        'trips-active': 'active',
+        'trips-pod': 'pod',
+        'trips-all': 'all',
       };
-      const status = tabMap[btn.dataset.tab];
-      if (status) {
-        loadTripTab(status, btn.dataset.tab + '-list');
-      } else if (btn.dataset.tab === 'trips-all') {
-        loadAllTrips();
-      }
+      const key = tabMap[btn.dataset.tab];
+      if (key) loadTripTab(key, `${btn.dataset.tab}-list`);
     });
   });
 }
 
-async function loadTripTab(status, containerId) {
-  const el = document.getElementById(containerId);
+async function loadTripTab(tabKey, elId) {
+  const el = document.getElementById(elId);
   if (!el) return;
   try {
-    const trips = await api('GET', `/api/transporter/trips?status=${encodeURIComponent(status)}`);
-    renderTripCards(el, Array.isArray(trips) ? trips : []);
+    let url = '/api/transporter/trips';
+    if (tabKey === 'assigned') url += '?status=assigned';
+    else if (tabKey === 'active') url += '?status=accepted&status=loaded&status=in_transit';
+    else if (tabKey === 'pod') url += '?status=delivered';
+
+    let trips = await api('GET', url);
+    if (!Array.isArray(trips)) trips = [];
+
+    if (tabKey === 'active') {
+      trips = trips.filter(t => ['accepted','loaded','in_transit'].includes(t.status));
+    }
+
+    if (!trips.length) {
+      const icons = { assigned:'🚛', active:'🚛', pod:'📋', all:'🚛' };
+      const msgs  = { assigned:'No pending assignments', active:'No active trips',
+                      pod:'No trips awaiting POD upload', all:'No trips yet' };
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">${icons[tabKey]||'🚛'}</div><p>${msgs[tabKey]||'No trips'}</p></div>`;
+      return;
+    }
+    el.innerHTML = trips.map(t => renderTripCard(t)).join('');
   } catch(e) {
-    el.innerHTML = '<div class="empty-state"><p style="color:var(--danger)">Failed to load</p></div>';
+    el.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${escHtml(e.message)}</p></div>`;
   }
 }
 
-async function loadAllTrips() {
-  const el = document.getElementById('trips-all-list');
-  if (!el) return;
-  try {
-    const trips = await api('GET', '/api/transporter/trips');
-    renderTripCards(el, Array.isArray(trips) ? trips : []);
-  } catch(e) {
-    el.innerHTML = '<div class="empty-state"><p style="color:var(--danger)">Failed to load</p></div>';
-  }
-}
+function renderTripCard(t) {
+  const statusActions = {
+    assigned: `
+      <button class="btn btn-primary btn-sm" onclick="acceptTrip('${t.id}')">Accept</button>
+      <button class="btn btn-outline btn-sm" onclick="declineTrip('${t.id}')">Decline</button>`,
+    accepted: `<button class="btn btn-primary btn-sm" onclick="updateTripStatus('${t.id}','loaded')">Mark Loaded</button>`,
+    loaded: `<button class="btn btn-primary btn-sm" onclick="updateTripStatus('${t.id}','in_transit')">Mark In Transit</button>`,
+    in_transit: `<button class="btn btn-primary btn-sm" onclick="updateTripStatus('${t.id}','delivered')">Mark Delivered</button>`,
+    delivered: `<button class="btn btn-primary btn-sm" onclick="openPODModal('${t.id}')">Upload POD</button>`,
+  };
 
-function renderTripCards(el, trips) {
-  if (!trips.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚛</div><p>No trips found</p></div>';
-    return;
-  }
-  el.innerHTML = trips.map(t => {
-    const route = `${escHtml(t.origin_city)}, ${escHtml(t.origin_state)} → ${escHtml(t.destination_city)}, ${escHtml(t.destination_state)}`;
-    return `
+  return `
     <div class="card" style="margin-bottom:0.75rem;">
       <div class="card-body">
         <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:0.5rem;">
           <div>
-            <div style="font-size:0.8rem;color:var(--gray-500)">${escHtml(t.trip_number)} · ${escHtml(t.route_code)}</div>
-            <div style="font-weight:600">${escHtml(t.cargo_description)}</div>
-            <div style="font-size:0.85rem;color:var(--gray-600);margin-top:2px">${route}</div>
+            <div style="font-size:0.8rem;color:var(--gray-500)">${escHtml(t.trip_number)}</div>
+            <div style="font-weight:600;">${escHtml(t.origin_city)} → ${escHtml(t.destination_city)}</div>
+            <div style="font-size:0.82rem;color:var(--gray-500);margin-top:0.15rem;">${escHtml(t.route_code)}${t.distance_km ? ` · ${fmtNum(t.distance_km)} km` : ''}</div>
           </div>
           <div>${statusBadge(t.status)}</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;margin-top:0.75rem;font-size:0.82rem;">
-          ${t.cargo_weight_tons ? `<div><span style="color:var(--gray-500)">Weight: </span>${fmtNum(t.cargo_weight_tons)} tons</div>` : ''}
-          ${t.distance_km       ? `<div><span style="color:var(--gray-500)">Distance: </span>${fmtNum(t.distance_km)} km</div>` : ''}
-          ${t.reg_number        ? `<div><span style="color:var(--gray-500)">Vehicle: </span>${escHtml(t.reg_number)}</div>` : ''}
-          ${t.assignment_deadline ? `<div><span style="color:var(--gray-500)">Deadline: </span>${fmtDate(t.assignment_deadline)}</div>` : ''}
+          ${t.cargo_description ? `<div><span style="color:var(--gray-500)">Cargo: </span>${escHtml(t.cargo_description)}</div>` : ''}
+          ${t.cargo_weight_tons ? `<div><span style="color:var(--gray-500)">Weight: </span>${fmtNum(t.cargo_weight_tons)} T</div>` : ''}
+          ${t.assignment_deadline ? `<div><span style="color:var(--gray-500)">Accept By: </span>${fmtDate(t.assignment_deadline)}</div>` : ''}
         </div>
-        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;flex-wrap:wrap;">
-          <button class="btn btn-outline btn-sm" onclick="showTripDetail('${t.id}')">View Details</button>
-          ${buildTripActions(t)}
-        </div>
+        ${statusActions[t.status] ? `
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;">
+            ${statusActions[t.status]}
+          </div>` : ''}
       </div>
     </div>`;
-  }).join('');
-}
-
-function buildTripActions(t) {
-  switch (t.status) {
-    case 'assigned':  return `<button class="btn btn-primary btn-sm" onclick="acceptTrip('${t.id}')">Accept</button>
-                               <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="openDeclineModal('${t.id}')">Decline</button>`;
-    case 'accepted':  return `<button class="btn btn-primary btn-sm" onclick="markTripLoaded('${t.id}')">Mark Loaded</button>`;
-    case 'loaded':    return `<button class="btn btn-primary btn-sm" onclick="markTripInTransit('${t.id}')">Mark In Transit</button>`;
-    case 'in_transit': return `<button class="btn btn-primary btn-sm" onclick="openDeliveredModal('${t.id}')">Mark Delivered + POD</button>`;
-    default: return '';
-  }
-}
-
-async function showTripDetail(tripId) {
-  let modal = document.getElementById('trip-detail-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'trip-detail-modal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = '<div class="modal-box" style="max-width:640px;"><div id="trip-detail-body"></div></div>';
-    document.body.appendChild(modal);
-  }
-  document.getElementById('trip-detail-body').innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
-  openModal('trip-detail-modal');
-  try {
-    const t = await api('GET', `/api/transporter/trips/${tripId}`);
-    const route = `${escHtml(t.origin_city)}, ${escHtml(t.origin_state)} → ${escHtml(t.destination_city)}, ${escHtml(t.destination_state)}`;
-    document.getElementById('trip-detail-body').innerHTML = `
-      <div class="modal-header">
-        <h3>${escHtml(t.trip_number)}</h3>
-        <button class="modal-close" onclick="closeModal('trip-detail-modal')">×</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
-          <span style="font-size:0.85rem;color:var(--gray-500)">${escHtml(t.route_code)}</span>
-          ${statusBadge(t.status)}
-        </div>
-        <div class="detail-grid">
-          <div><div style="font-size:0.75rem;color:var(--gray-500)">Route</div><div>${route}</div></div>
-          ${t.distance_km      ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Distance</div><div>${fmtNum(t.distance_km)} km</div></div>` : ''}
-          <div><div style="font-size:0.75rem;color:var(--gray-500)">Cargo</div><div>${escHtml(t.cargo_description)}</div></div>
-          ${t.cargo_weight_tons ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Weight</div><div>${fmtNum(t.cargo_weight_tons)} tons</div></div>` : ''}
-          ${t.reg_number       ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Vehicle</div><div>${escHtml(t.reg_number)} (${escHtml(t.vehicle_type||'')})</div></div>` : ''}
-          ${t.driver_name      ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Driver</div><div>${escHtml(t.driver_name)}</div></div>` : ''}
-          ${t.assigned_at      ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Assigned</div><div>${fmtDate(t.assigned_at)}</div></div>` : ''}
-          ${t.accepted_at      ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Accepted</div><div>${fmtDate(t.accepted_at)}</div></div>` : ''}
-          ${t.loaded_at        ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Loaded</div><div>${fmtDate(t.loaded_at)}</div></div>` : ''}
-          ${t.in_transit_at    ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">In Transit</div><div>${fmtDate(t.in_transit_at)}</div></div>` : ''}
-          ${t.delivered_at     ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Delivered</div><div>${fmtDate(t.delivered_at)}</div></div>` : ''}
-          ${t.pod_file_path    ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">POD Ref</div><div>${escHtml(t.pod_file_path)}</div></div>` : ''}
-          ${t.pod_delivered_qty ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Qty Delivered</div><div>${fmtNum(t.pod_delivered_qty)}</div></div>` : ''}
-          ${t.pod_notes        ? `<div style="grid-column:1/-1"><div style="font-size:0.75rem;color:var(--gray-500)">POD Notes</div><div>${escHtml(t.pod_notes)}</div></div>` : ''}
-        </div>
-        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap;">
-          <button class="btn btn-outline" onclick="closeModal('trip-detail-modal')">Close</button>
-          ${buildTripActions(t)}
-        </div>
-      </div>`;
-  } catch(e) {
-    document.getElementById('trip-detail-body').innerHTML =
-      `<div class="card-body"><p style="color:var(--danger)">${escHtml(e.message)}</p>
-       <button class="btn btn-outline" onclick="closeModal('trip-detail-modal')">Close</button></div>`;
-  }
 }
 
 async function acceptTrip(tripId) {
-  if (!confirm('Accept this trip assignment?')) return;
   Loading.show();
   try {
-    await api('POST', `/api/transporter/trips/${tripId}/accept`);
+    await api('POST', `/api/transporter/trips/${tripId}/accept`, {});
     Toast.success('Trip accepted');
-    closeModal('trip-detail-modal');
     await loadTransporterTrips();
-  } catch(e) { Toast.error(e.message); } finally { Loading.hide(); }
-}
-
-function openDeclineModal(tripId) {
-  let modal = document.getElementById('decline-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'decline-modal';
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
+  } catch(e) {
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
   }
-  modal.innerHTML = `<div class="modal-box" style="max-width:420px;">
-    <div class="modal-header">
-      <h3>Decline Trip</h3>
-      <button class="modal-close" onclick="closeModal('decline-modal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Reason for declining (optional)</label>
-        <textarea class="form-control" id="decline-reason" rows="3" placeholder="e.g. Vehicle unavailable..."></textarea>
-      </div>
-      <div id="decline-errors"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('decline-modal')">Cancel</button>
-      <button class="btn btn-danger" onclick="submitDecline('${tripId}')">Decline Trip</button>
-    </div>
-  </div>`;
-  openModal('decline-modal');
 }
 
-async function submitDecline(tripId) {
-  const reason = document.getElementById('decline-reason')?.value.trim();
+async function declineTrip(tripId) {
+  const reason = prompt('Reason for declining (optional):') ?? '';
   Loading.show();
   try {
     await api('POST', `/api/transporter/trips/${tripId}/decline`, { reason });
     Toast.success('Trip declined');
-    closeModal('decline-modal');
-    closeModal('trip-detail-modal');
     await loadTransporterTrips();
   } catch(e) {
-    document.getElementById('decline-errors').innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
-  } finally { Loading.hide(); }
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
+  }
 }
 
-async function markTripLoaded(tripId) {
-  if (!confirm('Confirm cargo has been loaded onto vehicle?')) return;
+async function updateTripStatus(tripId, newStatus) {
+  const labels = { loaded: 'Mark as Loaded?', in_transit: 'Mark as In Transit?', delivered: 'Mark as Delivered?' };
+  if (!confirm(labels[newStatus] || `Update to ${newStatus}?`)) return;
   Loading.show();
   try {
-    await api('POST', `/api/transporter/trips/${tripId}/loaded`);
-    Toast.success('Trip marked as loaded');
-    closeModal('trip-detail-modal');
+    await api('POST', `/api/transporter/trips/${tripId}/update-status`, { status: newStatus });
+    Toast.success('Status updated');
     await loadTransporterTrips();
-  } catch(e) { Toast.error(e.message); } finally { Loading.hide(); }
+  } catch(e) {
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
+  }
 }
 
-async function markTripInTransit(tripId) {
-  if (!confirm('Mark trip as in transit?')) return;
-  Loading.show();
-  try {
-    await api('POST', `/api/transporter/trips/${tripId}/in-transit`);
-    Toast.success('Trip is now in transit');
-    closeModal('trip-detail-modal');
-    await loadTransporterTrips();
-  } catch(e) { Toast.error(e.message); } finally { Loading.hide(); }
-}
-
-function openDeliveredModal(tripId) {
-  let modal = document.getElementById('pod-modal');
+function openPODModal(tripId) {
+  let modal = document.getElementById('pod-upload-modal');
   if (!modal) {
     modal = document.createElement('div');
-    modal.id = 'pod-modal';
+    modal.id = 'pod-upload-modal';
     modal.className = 'modal-overlay';
     document.body.appendChild(modal);
   }
   modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
     <div class="modal-header">
-      <h3>Mark Delivered — POD Details</h3>
-      <button class="modal-close" onclick="closeModal('pod-modal')">×</button>
+      <h3>Upload Proof of Delivery</h3>
+      <button class="modal-close" onclick="closeModal('pod-upload-modal')">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label class="form-label required">Qty Delivered</label>
-          <input class="form-control" type="number" id="pod-qty" step="0.01" min="0" placeholder="e.g. 10.5">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Delivery Receipt / LR Ref</label>
-          <input class="form-control" type="text" id="pod-ref" placeholder="Receipt number">
-        </div>
-        <div class="form-group" style="grid-column:1/-1">
-          <label class="form-label">Notes</label>
-          <textarea class="form-control" id="pod-notes" rows="2" placeholder="Any delivery remarks..."></textarea>
-        </div>
+      <div class="form-group">
+        <label class="form-label required">POD Document (PDF/JPG/PNG)</label>
+        <input class="form-control" type="file" id="pod-file" accept=".pdf,.jpg,.jpeg,.png">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity Delivered (Tons)</label>
+        <input class="form-control" type="number" id="pod-qty" step="0.01" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="pod-notes" rows="2" placeholder="Any delivery notes..."></textarea>
       </div>
       <div id="pod-errors"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('pod-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitDelivered('${tripId}')">Confirm Delivery</button>
+      <button class="btn btn-outline" onclick="closeModal('pod-upload-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPOD('${tripId}')">Upload POD</button>
     </div>
   </div>`;
-  openModal('pod-modal');
+  openModal('pod-upload-modal');
 }
 
-async function submitDelivered(tripId) {
-  const qty   = parseFloat(document.getElementById('pod-qty').value);
-  const ref   = document.getElementById('pod-ref')?.value.trim();
-  const notes = document.getElementById('pod-notes')?.value.trim();
-  if (!qty || qty < 0) {
-    document.getElementById('pod-errors').innerHTML = '<div class="alert alert-danger">Quantity delivered is required</div>';
+async function submitPOD(tripId) {
+  const file = document.getElementById('pod-file').files[0];
+  if (!file) {
+    document.getElementById('pod-errors').innerHTML =
+      '<div class="alert alert-danger">POD file is required</div>';
     return;
   }
+  const fd = new FormData();
+  fd.append('file', file);
+  const qty = document.getElementById('pod-qty').value;
+  const notes = document.getElementById('pod-notes').value.trim();
+  if (qty) fd.append('pod_delivered_qty', qty);
+  if (notes) fd.append('pod_notes', notes);
+
   Loading.show();
   try {
-    await api('POST', `/api/transporter/trips/${tripId}/delivered`, { pod_delivered_qty: qty, pod_ref: ref, pod_notes: notes });
-    Toast.success('Delivery confirmed with POD');
-    closeModal('pod-modal');
-    closeModal('trip-detail-modal');
+    const tok = document.cookie.split(';').map(c => c.trim())
+      .find(c => c.startsWith('portal_session='))?.split('=')[1];
+    const resp = await fetch(`/api/transporter/trips/${tripId}/pod`, {
+      method: 'POST',
+      headers: tok ? { 'X-Session-Token': tok } : {},
+      body: fd,
+    });
+    const json = await resp.json();
+    if (!resp.ok) throw new Error(json.error || 'Upload failed');
+    Toast.success('POD uploaded successfully');
+    closeModal('pod-upload-modal');
     await loadTransporterTrips();
   } catch(e) {
-    document.getElementById('pod-errors').innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
-  } finally { Loading.hide(); }
+    document.getElementById('pod-errors').innerHTML =
+      `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
+  } finally {
+    Loading.hide();
+  }
 }

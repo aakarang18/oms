@@ -65,7 +65,7 @@ function tStatusNote(status) {
   return notes[status] || '';
 }
 
-// ── Banking Details ───────────────────────────────────────────────────────────
+// ── Banking Details ────────────────────────────────────────────────────────────────
 
 async function loadTransporterBanking() {
   const el = document.getElementById('banking-content');
@@ -104,7 +104,7 @@ async function loadTransporterBanking() {
         <div class="modal" style="max-width:480px">
           <div class="modal-header">
             <h3>Banking Details</h3>
-            <button class="modal-close">✕</button>
+            <button class="modal-close">&#x2715;</button>
           </div>
           <div class="modal-body">
             <div class="form-group">

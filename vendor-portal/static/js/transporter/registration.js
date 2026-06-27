@@ -438,6 +438,7 @@ async function goToTStep(step) {
   renderTWizard(step);
 }
 
+// Vehicle Management (available after approval)
 async function initVehicleManagement() {
   await loadVehicles();
   document.getElementById('add-vehicle-btn').addEventListener('click', showAddVehicleModal);
@@ -469,7 +470,7 @@ function renderVehicleList(vehicles) {
             <span class="badge ${v.status === 'active' ? 'badge-approved' : v.status === 'compliance_hold' ? 'badge-rejected' : 'badge-pending'}">${v.status}</span>
           </div>
         </div>
-        <button class="btn btn-outline btn-sm" onclick="showVehicleDocModal('${v.id}','${escHtml(v.vehicle_no)'}">Manage Docs</button>
+        <button class="btn btn-outline btn-sm" onclick="showVehicleDocModal('${v.id}','${escHtml(v.vehicle_no)}')">Manage Docs</button>
       </div>
       ${renderVehicleDocBadges(v.documents || [])}
     </div>`).join('');

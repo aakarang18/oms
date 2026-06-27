@@ -43,7 +43,7 @@ async function showTransporterInvoiceDetail(invId) {
     <div class="modal" style="max-width:520px">
       <div class="modal-header">
         <h3>Invoice ${escHtml(inv.invoice_ref)}</h3>
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:.875rem">
@@ -88,7 +88,7 @@ async function openSubmitTransporterInvoiceModal() {
     <div class="modal" style="max-width:540px">
       <div class="modal-header">
         <h3>Submit Invoice</h3>
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
