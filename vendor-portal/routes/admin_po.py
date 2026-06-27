@@ -1,8 +1,7 @@
 from flask import Blueprint, jsonify, g, request
 from datetime import datetime
 from database import get_db, next_sequence
-from routes.auth import admin_required
-from routes.admin_rfq import audit, new_id
+from auth import admin_required, audit, new_id
 
 bp = Blueprint('admin_po', __name__)
 
@@ -54,6 +53,41 @@ def get_admin_po(po_id):
         grn = conn.execute("SELECT * FROM grns WHERE po_id=?", (po_id,)).fetchone()
         result['grn'] = dict(grn) if grn else None
         return jsonify(result)
+    finally:
+        conn.close()
+
+
+@bp.post('/api/admin/pos/<po_id>/dispatch')
+@admin_required
+def dispatch_po(po_id):
+    data = request.get_json(silent=True) or {}
+    dispatch_transport = (data.get('dispatch_transport') or '').strip()
+    dispatch_lr_number = (data.get('dispatch_lr_number') or '').strip()
+    dispatched_at = (data.get('dispatched_at') or '').strip()
+
+    if not dispatch_transport:
+        return jsonify({'error': 'dispatch_transport is required'}), 400
+    if not dispatched_at:
+        return jsonify({'error': 'dispatched_at is required'}), 400
+
+    conn = get_db()
+    try:
+        po = conn.execute(
+            "SELECT * FROM purchase_orders WHERE id=? AND is_deleted=0", (po_id,)
+        ).fetchone()
+        if not po:
+            return jsonify({'error': 'PO not found'}), 404
+        if po['status'] != 'acknowledged':
+            return jsonify({'error': 'PO must be acknowledged before marking as dispatched'}), 400
+
+        now = datetime.utcnow().isoformat()
+        conn.execute("""
+            UPDATE purchase_orders SET status='dispatched', dispatch_transport=?,
+                dispatch_lr_number=?, dispatched_at=?, updated_at=? WHERE id=?
+        """, (dispatch_transport, dispatch_lr_number or None, dispatched_at, now, po_id))
+        conn.commit()
+        audit(g.user['id'], 'po', po_id, 'dispatched', 'acknowledged', 'dispatched')
+        return jsonify({'status': 'dispatched'})
     finally:
         conn.close()
 
