@@ -1,8 +1,7 @@
 from flask import Blueprint, jsonify, g, request
 from datetime import datetime
 from database import get_db
-from routes.auth import vendor_required
-from routes.admin_rfq import audit, new_id
+from auth import vendor_required, audit, new_id
 
 bp = Blueprint('po', __name__)
 
@@ -46,6 +45,7 @@ def get_vendor_po(po_id):
         if not po:
             return jsonify({'error': 'Not found'}), 404
         result = dict(po)
+        # Attach GRN if exists
         grn = conn.execute(
             "SELECT * FROM grns WHERE po_id=?", (po_id,)
         ).fetchone()
