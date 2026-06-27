@@ -40,7 +40,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6 MB max upload
 
-# ─── Init ──────────────────────────────────────────────────────────────────────
+# ─── Init ─────────────────────────────────────────────────────────────────────────
 init_db()
 init_mail(app)
 
@@ -69,7 +69,7 @@ if os.environ.get("WERKZEUG_RUN_MAIN") != "false":
         print(f"[Scheduler] Failed to start: {e}")
 
 
-# ─── Auth API ─────────────────────────────────────────────────────────────────
+# ─── Auth API ─────────────────────────────────────────────────────────────────────────────
 
 @app.post("/api/auth/request-otp")
 def api_request_otp():
@@ -199,7 +199,7 @@ def api_me():
     })
 
 
-# ─── Portal Shell Routes ───────────────────────────────────────────────────────
+# ─── Portal Shell Routes ──────────────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def landing():
@@ -229,7 +229,7 @@ def admin_portal():
     return render_template("admin.html", user=g.user)
 
 
-# ─── Vendor Registration (pre-auth flow) ─────────────────────────────────────
+# ─── Vendor Registration (pre-auth flow) ───────────────────────────────────────────────────
 
 @app.post("/api/register/vendor/init")
 def api_vendor_register_init():
@@ -252,10 +252,6 @@ def api_vendor_register_init():
         now = datetime.utcnow().isoformat()
         vendor_id = new_id()
         user_id   = new_id()
-
-        draft_expires = (datetime.utcnow().replace(
-            hour=0, minute=0, second=0, microsecond=0
-        ).__class__.utcnow()).isoformat()  # placeholder; set properly below
 
         from datetime import timedelta
         draft_expires = (datetime.utcnow() + timedelta(days=30)).isoformat()
@@ -400,7 +396,7 @@ def api_transporter_verify_otp():
     return resp
 
 
-# ─── Notification API ─────────────────────────────────────────────────────────
+# ─── Notification API ─────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/notifications")
 @login_required
@@ -457,7 +453,7 @@ def api_mark_all_read():
     return jsonify({"ok": True})
 
 
-# ─── Admin: seed super_admin (only if no admin exists) ───────────────────────
+# ─── Admin: seed super_admin (only if no admin exists) ───────────────────────────────────────────────
 
 @app.post("/api/setup/admin")
 def api_setup_admin():
@@ -492,7 +488,7 @@ def api_setup_admin():
         conn.close()
 
 
-# ─── Dashboard APIs ───────────────────────────────────────────────────────────
+# ─── Dashboard APIs ─────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/vendor/dashboard")
 @vendor_required
@@ -544,7 +540,6 @@ def api_vendor_dashboard():
 
         vendor = conn.execute("SELECT status FROM vendors WHERE id=?", (vendor_id,)).fetchone()
 
-        # Recent activity from notifications
         notifs = conn.execute(
             """SELECT title as message, event_type as type, created_at as time
                FROM notifications WHERE user_id=? AND channel='in_app'
@@ -689,7 +684,7 @@ def api_admin_dashboard():
         conn.close()
 
 
-# ─── Error Handlers ───────────────────────────────────────────────────────────
+# ─── Error Handlers ─────────────────────────────────────────────────────────────────────────────
 
 @app.errorhandler(403)
 def forbidden(e):
