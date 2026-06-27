@@ -25,6 +25,8 @@ const MANDATORY_DOCS = [
 let _profile  = null;
 let _curStep  = 1;
 
+// ── Init ───────────────────────────────────────────────────────────────────────
+
 async function initRegistrationWizard() {
   try {
     _profile = await api("GET", "/api/vendor/profile");
@@ -42,6 +44,7 @@ async function initRegistrationWizard() {
     return;
   }
 
+  // Show wizard
   regWrap.style.display  = "block";
   mainWrap.style.display = "none";
 
@@ -58,9 +61,12 @@ async function initRegistrationWizard() {
     return;
   }
 
+  // Draft — show wizard
   _curStep = Math.max(1, Math.min(_profile.registration_step || 1, 5));
   renderWizard(_curStep);
 }
+
+// ── Status screens ─────────────────────────────────────────────────────────────
 
 function showSubmittedState() {
   document.getElementById("reg-wizard-wrap").innerHTML = `
@@ -69,12 +75,12 @@ function showSubmittedState() {
       <h2 style="color:var(--brand-dark)">Registration Under Review</h2>
       <p style="margin:12px 0 28px;color:var(--gray-500)">
         Your registration has been submitted and is being reviewed by our team.
-        We’ll notify you via SMS and email once a decision is made.
+        We'll notify you via SMS and email once a decision is made.
       </p>
       <div class="alert alert-info" style="text-align:left">
         <strong>What happens next?</strong><br>
         Our procurement team reviews registrations within 2–3 business days.
-        You’ll receive an SMS and email notification once approved.
+        You'll receive an SMS and email notification once approved.
       </div>
       <button class="btn btn-ghost" style="margin-top:16px" onclick="logout()">Sign Out</button>
     </div>`;
@@ -122,6 +128,8 @@ function showRejectedState(reason) {
     </div>`;
 }
 
+// ── Wizard renderer ────────────────────────────────────────────────────────────
+
 function renderWizard(step) {
   _curStep = step;
   const wrap = document.getElementById("reg-wizard-wrap");
@@ -140,16 +148,19 @@ function renderWizard(step) {
         <div class="card-body">${renderStep(step)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:16px;gap:12px">
-        ${step > 1 ? `<button class="btn btn-ghost" onclick="goToStep(${step-1})">&#8592; Back</button>` : '<span></span>'}
+        ${step > 1 ? `<button class="btn btn-ghost" onclick="goToStep(${step-1})">← Back</button>` : '<span></span>'}
         <button class="btn btn-primary btn-lg" id="step-next-btn" onclick="submitStep(${step})">
           ${step < 5 ? "Save & Continue →" : "Submit Registration"}
         </button>
       </div>
     </div>`;
 
+  // Bind file upload zones after render
   if (step === 3) initDocUploadZones();
   if (step === 5) populateReview();
 }
+
+// ── Progress bar ───────────────────────────────────────────────────────────────
 
 function renderProgressBar(current) {
   const pct = Math.round(((current - 1) / (STEPS.length - 1)) * 100);
@@ -173,6 +184,8 @@ function renderProgressBar(current) {
       `).join('')}
     </div>`;
 }
+
+// ── Step templates ─────────────────────────────────────────────────────────────
 
 function renderStep(n) {
   if (n === 1) return renderStep1();
@@ -297,7 +310,7 @@ function renderStep1() {
 function renderStep2() {
   const cats = _profile?.categories || [];
   return `
-    <h3 style="margin-bottom:20px">Step 2 — Products &amp; Categories</h3>
+    <h3 style="margin-bottom:20px">Step 2 — Products & Categories</h3>
     <div class="form-group">
       <label>Supply Categories <span class="required">*</span> <span style="font-size:.78rem;color:var(--gray-400)">(select all that apply)</span></label>
       <div class="checkbox-group" style="margin-top:10px">
@@ -350,7 +363,7 @@ function renderStep3() {
   return `
     <h3 style="margin-bottom:6px">Step 3 — Document Upload</h3>
     <p style="margin-bottom:20px;color:var(--gray-500);font-size:.875rem">
-      PDF, JPG or PNG &bull; Max 5 MB per file
+      PDF, JPG or PNG • Max 5 MB per file
     </p>
     <div id="doc-upload-list">
       ${MANDATORY_DOCS.map(doc => renderDocRow(doc, uploaded[doc.key])).join("")}
@@ -396,7 +409,9 @@ function renderDocRow(doc, existing) {
     </div>`;
 }
 
-function initDocUploadZones() {}
+function initDocUploadZones() {
+  // file inputs already set up via onchange in HTML
+}
 
 async function handleDocUpload(input) {
   const docType = input.dataset.doctype;
@@ -424,6 +439,7 @@ async function handleDocUpload(input) {
     if (!resp.ok) { Toast.error(data.error || "Upload failed"); return; }
 
     Toast.success(`${data.doc_type.replace(/_/g," ")} uploaded`);
+    // Refresh profile and re-render doc list
     _profile = await api("GET", "/api/vendor/profile");
     const uploaded = {};
     (_profile.documents || []).forEach(d => { uploaded[d.doc_type] = d; });
@@ -490,7 +506,7 @@ function renderStep4() {
 
 function renderStep5() {
   return `
-    <h3 style="margin-bottom:20px">Step 5 — Review &amp; Submit</h3>
+    <h3 style="margin-bottom:20px">Step 5 — Review & Submit</h3>
     <div id="review-content">
       <div class="empty-state"><div class="spinner"></div></div>
     </div>`;
@@ -532,7 +548,7 @@ async function populateReview() {
 
     <div class="card" style="margin-bottom:16px">
       <div class="card-header" style="cursor:pointer" onclick="goToStep(2)">
-        <h4>Categories &amp; Products</h4><span style="color:var(--brand-mid);font-size:.8rem">Edit →</span>
+        <h4>Categories & Products</h4><span style="color:var(--brand-mid);font-size:.8rem">Edit →</span>
       </div>
       <div class="card-body">
         <div style="font-size:.875rem;color:var(--gray-700)">
@@ -591,6 +607,8 @@ function reviewField(label, value) {
     <div style="font-size:.875rem;color:var(--gray-800);font-weight:500;margin-top:2px">${escHtml(value||"—")}</div>
   </div>`;
 }
+
+// ── Step submission ────────────────────────────────────────────────────────────
 
 async function submitStep(step) {
   const btn = document.getElementById("step-next-btn");
@@ -727,6 +745,8 @@ function renderFieldErrors(errors) {
   const first = Object.keys(errors)[0];
   if (first) document.getElementById(`f-${first}`)?.focus();
 }
+
+// ── MSME toggle ───────────────────────────────────────────────────────────────
 
 document.addEventListener("change", e => {
   if (e.target.name === "msme") {
