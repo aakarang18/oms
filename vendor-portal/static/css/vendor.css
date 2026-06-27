@@ -1,0 +1,8 @@
+/* Vendor Portal — accent overrides */
+:root {
+  --portal-accent: #16a34a;   /* green accent for vendor portal */
+}
+.sidebar { background: #14532d; }
+.sidebar-logo .portal-label { color: #86efac; }
+.nav-item.active { border-left-color: #4ade80; }
+.stat-card::before { background: #16a34a; }
