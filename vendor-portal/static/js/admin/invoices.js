@@ -2,6 +2,8 @@
 
 let _approvedInvoices = [];
 
+// ── INVOICE REVIEW ───────────────────────────────────────────────────────────
+
 async function initAdminInvoices() {
   const el = document.getElementById('admin-invoices-list');
   el.innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
@@ -168,6 +170,8 @@ async function submitInvoiceReject(invId) {
   }
 }
 
+// ── PAYMENT RECORDING ────────────────────────────────────────────────────────
+
 async function initAdminPayments() {
   const el = document.getElementById('admin-payments-list');
   el.innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
@@ -251,7 +255,9 @@ async function openRecordPaymentModal() {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  document.getElementById('pay-date').value = new Date().toISOString().slice(0, 10);
+
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('pay-date').value = today;
 }
 
 function prefillPayAmount() {
