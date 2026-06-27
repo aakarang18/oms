@@ -23,7 +23,7 @@ def _transport_required(f):
     return roles_required(*TRANSPORT_ROLES)(f)
 
 
-# ── Vendor list ───────────────────────────────────────────────────────────────
+# ── Vendor list ───────────────────────────────────────────────────────────────────
 
 @bp.get("/api/admin/vendors")
 @admin_required
@@ -222,7 +222,7 @@ def request_vendor_info(vid):
         conn.close()
 
 
-# ── Transporter list / detail / actions ───────────────────────────────────────
+# ── Transporter list / detail / actions ──────────────────────────────────────────
 
 @bp.get("/api/admin/transporters")
 @admin_required
@@ -403,7 +403,7 @@ def request_transporter_info(tid):
         conn.close()
 
 
-# ── Compliance dashboard ───────────────────────────────────────────────────────
+# ── Compliance dashboard ──────────────────────────────────────────────────────
 
 @bp.get("/api/admin/compliance")
 @admin_required
@@ -447,7 +447,7 @@ def compliance_dashboard():
         conn.close()
 
 
-# ── Audit log ─────────────────────────────────────────────────────────────────
+# ── Audit log ────────────────────────────────────────────────────────────────────
 
 @bp.get("/api/admin/audit-log")
 @admin_required
@@ -490,7 +490,7 @@ def audit_log():
         conn.close()
 
 
-# ── Admin user management ─────────────────────────────────────────────────────
+# ── Admin user management ────────────────────────────────────────────────────────
 
 @bp.get("/api/admin/users")
 @roles_required("super_admin")
@@ -537,7 +537,7 @@ def create_admin_user():
         conn.close()
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────────────
 
 def _notify_entity(conn, users, entity_id, entity_type, title, body, event_type, now):
     for u in users:

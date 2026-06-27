@@ -52,12 +52,14 @@ def get_admin_invoice(inv_id):
                    u.name as party_name, u.email as party_email,
                    p.po_number, p.total_value as po_value,
                    g.grn_number, g.received_qty,
-                   t.trip_number, t.origin_city, t.dest_city
+                   t.trip_number,
+                   r.origin_city, r.destination_city as dest_city
             FROM invoices i
             LEFT JOIN users u ON u.entity_id = i.party_id
             LEFT JOIN purchase_orders p ON p.id = i.linked_po_id
             LEFT JOIN grns g ON g.id = i.linked_grn_id
             LEFT JOIN trips t ON t.id = i.linked_trip_id
+            LEFT JOIN routes r ON r.id = t.route_id
             WHERE i.id=?
         """, (inv_id,)).fetchone()
         if not row:
@@ -101,7 +103,8 @@ def review_invoice(inv_id):
         """, (action, reason if action == 'rejected' else None,
                g.user['id'], now, now, inv_id))
         conn.commit()
-        audit(g.user['id'], 'invoice', inv_id, action, 'submitted', action)
+        audit(g.user['id'], 'invoice', inv_id, action,
+              'submitted', action)
         return jsonify({'id': inv_id, 'status': action})
     finally:
         conn.close()
@@ -181,6 +184,7 @@ def record_payment():
 @bp.get('/api/admin/invoices-approved')
 @admin_required
 def list_approved_invoices():
+    """Return approved (unpaid) invoices for payment recording dropdown."""
     conn = get_db()
     try:
         rows = conn.execute("""

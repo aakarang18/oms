@@ -16,9 +16,11 @@ def list_transporter_invoices():
     try:
         rows = conn.execute("""
             SELECT i.*,
-                   t.trip_number, t.origin_city, t.dest_city
+                   t.trip_number,
+                   r.origin_city, r.destination_city as dest_city
             FROM invoices i
             LEFT JOIN trips t ON t.id = i.linked_trip_id
+            LEFT JOIN routes r ON r.id = t.route_id
             WHERE i.party_type='transporter' AND i.party_id=?
             ORDER BY i.submitted_at DESC
         """, (trans_id,)).fetchall()
@@ -35,10 +37,12 @@ def get_transporter_invoice(inv_id):
     try:
         row = conn.execute("""
             SELECT i.*,
-                   t.trip_number, t.origin_city, t.origin_state,
-                   t.dest_city, t.dest_state, t.pod_delivered_qty
+                   t.trip_number, t.pod_delivered_qty,
+                   r.origin_city, r.origin_state,
+                   r.destination_city as dest_city, r.destination_state as dest_state
             FROM invoices i
             LEFT JOIN trips t ON t.id = i.linked_trip_id
+            LEFT JOIN routes r ON r.id = t.route_id
             WHERE i.id=? AND i.party_type='transporter' AND i.party_id=?
         """, (inv_id, trans_id)).fetchone()
         if not row:
@@ -120,6 +124,7 @@ def submit_transporter_invoice():
 @bp.get('/api/transporter/trips-for-invoice')
 @transporter_required
 def trips_for_invoice():
+    """Return delivered trips that don't have an approved invoice yet."""
     trans_id = g.user['entity_id']
     conn = get_db()
     try:

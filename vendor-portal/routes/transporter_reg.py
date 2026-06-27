@@ -405,7 +405,7 @@ def transporter_resubmit():
         conn.close()
 
 
-# ── Vehicle Management (after approval) ───────────────────────────────────────
+# ── Vehicle Management (after approval) ─────────────────────────────────────────
 
 @bp.post("/api/transporter/vehicles")
 @transporter_required
@@ -550,11 +550,11 @@ def transporter_documents():
         vehicle_rows = conn.execute(
             """SELECT vhd.id, vhd.doc_type, vhd.file_name, vhd.file_size_bytes,
                       vhd.expiry_date, vhd.expiry_status, vhd.uploaded_at,
-                      vh.registration_number
+                      vh.reg_number
                FROM vehicle_documents vhd
                JOIN vehicles vh ON vh.id = vhd.vehicle_id
                WHERE vh.transporter_id=? AND vhd.is_deleted=0
-               ORDER BY vh.registration_number, vhd.uploaded_at DESC""",
+               ORDER BY vh.reg_number, vhd.uploaded_at DESC""",
             (tid,)
         ).fetchall()
         return jsonify({
