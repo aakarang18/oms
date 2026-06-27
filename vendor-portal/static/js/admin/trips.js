@@ -1,37 +1,230 @@
 'use strict';
 
-// ── Routes ─────────────────────────────────────────────────────────────────────
-
 let _adminRoutes = [];
+let _approvedTransporters = [];
+
+// ── Admin Trips ────────────────────────────────────────────────────────────────
+
+async function initAdminTrips() {
+  const el = document.getElementById('admin-trips-list');
+  if (!el) return;
+  try {
+    const trips = await api('GET', '/api/admin/trips');
+    const list = Array.isArray(trips) ? trips : [];
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div>';
+      return;
+    }
+    el.innerHTML = list.map(t => `
+      <div class="card" style="margin-bottom:0.75rem;">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:0.5rem;">
+            <div>
+              <div style="font-size:0.8rem;color:var(--gray-500)">${escHtml(t.trip_number)}</div>
+              <div style="font-weight:600;">${escHtml(t.origin_city)} → ${escHtml(t.destination_city)}</div>
+              <div style="font-size:0.82rem;color:var(--gray-500)">${escHtml(t.route_code)}${t.transporter_name ? ` · ${escHtml(t.transporter_name)}` : ''}</div>
+            </div>
+            <div>${statusBadge(t.status)}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;margin-top:0.75rem;font-size:0.82rem;">
+            ${t.cargo_description ? `<div><span style="color:var(--gray-500)">Cargo: </span>${escHtml(t.cargo_description)}</div>` : ''}
+            ${t.vehicle_reg ? `<div><span style="color:var(--gray-500)">Vehicle: </span>${escHtml(t.vehicle_reg)}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;flex-wrap:wrap;">
+            ${t.status === 'posted' ? `<button class="btn btn-primary btn-sm" onclick="openAssignTripModal('${t.id}')">Assign Transporter</button>` : ''}
+            ${t.status === 'pod_uploaded' ? `<button class="btn btn-primary btn-sm" onclick="approvePOD('${t.id}')">Approve POD</button>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    if (el) el.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${escHtml(e.message)}</p></div>`;
+  }
+}
+
+async function openPostTripModal() {
+  if (!_adminRoutes.length) {
+    try { _adminRoutes = await api('GET', '/api/admin/routes'); } catch { _adminRoutes = []; }
+  }
+  let modal = document.getElementById('modal-post-trip');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-post-trip';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+  const routeOpts = _adminRoutes.length
+    ? _adminRoutes.filter(r => r.is_active).map(r =>
+        `<option value="${r.id}">${escHtml(r.route_code)} — ${escHtml(r.origin_city)} → ${escHtml(r.destination_city)}</option>`
+      ).join('')
+    : '<option value="">No active routes</option>';
+
+  modal.innerHTML = `<div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>Post New Trip</h3>
+      <button class="modal-close" onclick="closeModal('modal-post-trip')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label required">Route</label>
+        <select class="form-control" id="pt-route">${routeOpts}</select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Cargo Description</label>
+          <input class="form-control" id="pt-cargo" placeholder="e.g. Alum powder">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weight (Tons)</label>
+          <input class="form-control" type="number" id="pt-weight" step="0.1" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assignment Deadline</label>
+          <input class="form-control" type="date" id="pt-deadline">
+        </div>
+      </div>
+      <div id="pt-errors"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-post-trip')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPostTrip()">Post Trip</button>
+    </div>
+  </div>`;
+  openModal('modal-post-trip');
+}
+
+async function submitPostTrip() {
+  const route_id = document.getElementById('pt-route').value;
+  if (!route_id) {
+    document.getElementById('pt-errors').innerHTML = '<div class="alert alert-danger">Route is required</div>';
+    return;
+  }
+  Loading.show();
+  try {
+    const res = await api('POST', '/api/admin/trips', {
+      route_id,
+      cargo_description: document.getElementById('pt-cargo').value.trim() || null,
+      cargo_weight_tons: document.getElementById('pt-weight').value || null,
+      assignment_deadline: document.getElementById('pt-deadline').value || null,
+    });
+    Toast.success(`Trip ${res.trip_number} posted`);
+    closeModal('modal-post-trip');
+    await initAdminTrips();
+  } catch(e) {
+    document.getElementById('pt-errors').innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
+  } finally {
+    Loading.hide();
+  }
+}
+
+async function openAssignTripModal(tripId) {
+  if (!_approvedTransporters.length) {
+    try {
+      const res = await api('GET', '/api/admin/transporters?status=approved');
+      _approvedTransporters = Array.isArray(res) ? res : [];
+    } catch { _approvedTransporters = []; }
+  }
+  let modal = document.getElementById('modal-assign-trip');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-assign-trip';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+  const opts = _approvedTransporters.length
+    ? _approvedTransporters.map(t => `<option value="${t.id}">${escHtml(t.company_name)}</option>`).join('')
+    : '<option value="">No approved transporters</option>';
+
+  modal.innerHTML = `<div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Assign Transporter</h3>
+      <button class="modal-close" onclick="closeModal('modal-assign-trip')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label required">Transporter</label>
+        <select class="form-control" id="at-transporter">${opts}</select>
+      </div>
+      <div id="at-errors"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-assign-trip')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAssignTrip('${tripId}')">Assign</button>
+    </div>
+  </div>`;
+  openModal('modal-assign-trip');
+}
+
+async function submitAssignTrip(tripId) {
+  const transporter_id = document.getElementById('at-transporter').value;
+  if (!transporter_id) return;
+  Loading.show();
+  try {
+    await api('POST', `/api/admin/trips/${tripId}/assign`, { transporter_id });
+    Toast.success('Trip assigned');
+    closeModal('modal-assign-trip');
+    await initAdminTrips();
+  } catch(e) {
+    document.getElementById('at-errors').innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
+  } finally {
+    Loading.hide();
+  }
+}
+
+async function approvePOD(tripId) {
+  if (!confirm('Approve this POD and mark the trip as completed?')) return;
+  Loading.show();
+  try {
+    await api('POST', `/api/admin/trips/${tripId}/approve-pod`, {});
+    Toast.success('POD approved, trip completed');
+    await initAdminTrips();
+  } catch(e) {
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
+  }
+}
+
+// ── Admin Routes ───────────────────────────────────────────────────────────────
 
 async function initAdminRoutes() {
   const el = document.getElementById('routes-list');
   if (!el) return;
   try {
-    _adminRoutes = await api('GET', '/api/admin/routes');
-    renderAdminRoutes(Array.isArray(_adminRoutes) ? _adminRoutes : []);
+    const routes = await api('GET', '/api/admin/routes');
+    _adminRoutes = Array.isArray(routes) ? routes : [];
+    if (!_adminRoutes.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined</p></div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table"><thead><tr>
+      <th>Code</th><th>Origin</th><th>Destination</th><th>Distance</th><th>Type</th><th>Status</th><th>Action</th>
+    </tr></thead><tbody>
+      ${_adminRoutes.map(r => `<tr>
+        <td><strong>${escHtml(r.route_code)}</strong></td>
+        <td>${escHtml(r.origin_city)}, ${escHtml(r.origin_state)}</td>
+        <td>${escHtml(r.destination_city)}, ${escHtml(r.destination_state)}</td>
+        <td>${r.distance_km ? fmtNum(r.distance_km) + ' km' : '—'}</td>
+        <td>${escHtml(r.route_type)}</td>
+        <td>${r.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="toggleRoute('${r.id}',${r.is_active})">${r.is_active ? 'Deactivate' : 'Activate'}</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
   } catch(e) {
-    el.innerHTML = '<div class="empty-state"><p style="color:var(--danger)">Failed to load routes</p></div>';
+    if (el) el.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${escHtml(e.message)}</p></div>`;
   }
 }
 
-function renderAdminRoutes(routes) {
-  const el = document.getElementById('routes-list');
-  if (!routes.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗺️</div><p>No routes defined yet</p></div>';
-    return;
+async function toggleRoute(routeId, isActive) {
+  if (!confirm(`${isActive ? 'Deactivate' : 'Activate'} this route?`)) return;
+  Loading.show();
+  try {
+    await api('PATCH', `/api/admin/routes/${routeId}/toggle`, {});
+    await initAdminRoutes();
+  } catch(e) {
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
   }
-  el.innerHTML = `<table class="data-table"><thead><tr>
-    <th>Code</th><th>Origin</th><th>Destination</th><th>Distance</th><th>Type</th><th>Status</th>
-  </tr></thead><tbody>${routes.map(r => `
-    <tr>
-      <td style="font-weight:600">${escHtml(r.route_code)}</td>
-      <td>${escHtml(r.origin_city)}, ${escHtml(r.origin_state)}</td>
-      <td>${escHtml(r.destination_city)}, ${escHtml(r.destination_state)}</td>
-      <td>${r.distance_km ? fmtNum(r.distance_km) + ' km' : '—'}</td>
-      <td>${escHtml(r.route_type)}</td>
-      <td><span class="badge ${r.is_active ? 'badge-success' : 'badge-secondary'}">${r.is_active ? 'Active' : 'Inactive'}</span></td>
-    </tr>`).join('')}</tbody></table>`;
 }
 
 function openCreateRouteModal() {
@@ -44,429 +237,140 @@ function openCreateRouteModal() {
   }
   modal.innerHTML = `<div class="modal-box" style="max-width:520px;">
     <div class="modal-header">
-      <h3>Create Route</h3>
+      <h3>Add Route</h3>
       <button class="modal-close" onclick="closeModal('modal-create-route')">×</button>
     </div>
     <div class="modal-body">
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label required">Origin City</label>
-          <input class="form-control" type="text" id="route-origin-city" placeholder="e.g. Mumbai">
+          <input class="form-control" id="cr-origin-city">
         </div>
         <div class="form-group">
           <label class="form-label required">Origin State</label>
-          <input class="form-control" type="text" id="route-origin-state" placeholder="e.g. Maharashtra">
+          <input class="form-control" id="cr-origin-state">
         </div>
         <div class="form-group">
           <label class="form-label required">Destination City</label>
-          <input class="form-control" type="text" id="route-dest-city" placeholder="e.g. Pune">
+          <input class="form-control" id="cr-dest-city">
         </div>
         <div class="form-group">
           <label class="form-label required">Destination State</label>
-          <input class="form-control" type="text" id="route-dest-state" placeholder="e.g. Maharashtra">
+          <input class="form-control" id="cr-dest-state">
         </div>
         <div class="form-group">
           <label class="form-label">Distance (km)</label>
-          <input class="form-control" type="number" id="route-distance" step="0.1" min="0" placeholder="0.0">
+          <input class="form-control" type="number" id="cr-distance" step="0.1" min="0">
         </div>
         <div class="form-group">
           <label class="form-label">Route Type</label>
-          <select class="form-control" id="route-type">
-            <option value="Road">Road</option>
-            <option value="Rail">Rail</option>
-            <option value="Sea">Sea</option>
-            <option value="Air">Air</option>
+          <select class="form-control" id="cr-type">
+            <option>Road</option><option>Rail</option><option>Waterway</option>
           </select>
         </div>
       </div>
-      <div id="route-errors"></div>
+      <div id="cr-errors"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-create-route')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitRoute()">Create Route</button>
+      <button class="btn btn-primary" onclick="submitCreateRoute()">Create Route</button>
     </div>
   </div>`;
   openModal('modal-create-route');
 }
 
-async function submitRoute() {
-  const origin_city       = document.getElementById('route-origin-city')?.value.trim();
-  const origin_state      = document.getElementById('route-origin-state')?.value.trim();
-  const destination_city  = document.getElementById('route-dest-city')?.value.trim();
-  const destination_state = document.getElementById('route-dest-state')?.value.trim();
-  const distance_km       = parseFloat(document.getElementById('route-distance')?.value) || null;
-  const route_type        = document.getElementById('route-type')?.value;
-  const errEl             = document.getElementById('route-errors');
+async function submitCreateRoute() {
+  const origin_city = document.getElementById('cr-origin-city').value.trim();
+  const origin_state = document.getElementById('cr-origin-state').value.trim();
+  const destination_city = document.getElementById('cr-dest-city').value.trim();
+  const destination_state = document.getElementById('cr-dest-state').value.trim();
 
   if (!origin_city || !origin_state || !destination_city || !destination_state) {
-    errEl.innerHTML = '<div class="alert alert-danger">Origin and destination (city + state) are required</div>';
+    document.getElementById('cr-errors').innerHTML =
+      '<div class="alert alert-danger">All city and state fields are required</div>';
     return;
   }
   Loading.show();
   try {
-    const res = await api('POST', '/api/admin/routes', { origin_city, origin_state, destination_city, destination_state, distance_km, route_type });
+    const res = await api('POST', '/api/admin/routes', {
+      origin_city, origin_state, destination_city, destination_state,
+      distance_km: document.getElementById('cr-distance').value || null,
+      route_type: document.getElementById('cr-type').value,
+    });
     Toast.success(`Route ${res.route_code} created`);
     closeModal('modal-create-route');
     await initAdminRoutes();
   } catch(e) {
-    errEl.innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
-  } finally { Loading.hide(); }
+    document.getElementById('cr-errors').innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
+  } finally {
+    Loading.hide();
+  }
 }
 
-// ── Rate Card Approvals ────────────────────────────────────────────────────
+// ── Admin Rate Card Approvals ──────────────────────────────────────────────────
 
 async function initAdminRateApprovals() {
   const el = document.getElementById('rate-approval-list');
   if (!el) return;
   try {
-    const cards = await api('GET', '/api/admin/rate-cards?status=pending');
-    renderRateApprovalList(Array.isArray(cards) ? cards : []);
-  } catch(e) {
-    el.innerHTML = '<div class="empty-state"><p style="color:var(--danger)">Failed to load</p></div>';
-  }
-}
-
-function renderRateApprovalList(cards) {
-  const el = document.getElementById('rate-approval-list');
-  if (!cards.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div>';
-    return;
-  }
-  el.innerHTML = cards.map(c => `
-    <div class="card" style="margin-bottom:0.75rem;">
-      <div class="card-body">
-        <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:0.5rem;">
-          <div>
-            <div style="font-size:0.8rem;color:var(--gray-500)">${escHtml(c.route_code)} · ${escHtml(c.transporter_name)}</div>
-            <div style="font-weight:600">${escHtml(c.origin_city)}, ${escHtml(c.origin_state)} → ${escHtml(c.destination_city)}, ${escHtml(c.destination_state)}</div>
-            <div style="font-size:0.85rem;color:var(--gray-600)">${escHtml(c.vehicle_type)}</div>
+    const rcs = await api('GET', '/api/admin/rate-cards?status=pending');
+    const list = Array.isArray(rcs) ? rcs : [];
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div><p>No pending rate cards</p></div>';
+      return;
+    }
+    el.innerHTML = list.map(rc => `
+      <div class="card" style="margin-bottom:0.75rem;">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:0.5rem;">
+            <div>
+              <div style="font-weight:600;">${escHtml(rc.transporter_name)}</div>
+              <div style="font-size:0.82rem;color:var(--gray-500)">${escHtml(rc.route_code)} — ${escHtml(rc.origin_city)} → ${escHtml(rc.destination_city)}</div>
+            </div>
+            ${statusBadge(rc.status)}
           </div>
-          ${statusBadge(c.status)}
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;margin-top:0.75rem;font-size:0.82rem;">
+            <div><span style="color:var(--gray-500)">Type: </span>${escHtml(rc.vehicle_type)}</div>
+            ${rc.rate_per_km != null ? `<div><span style="color:var(--gray-500)">Per km: </span>${fmtMoney(rc.rate_per_km)}</div>` : ''}
+            ${rc.rate_per_ton != null ? `<div><span style="color:var(--gray-500)">Per ton: </span>${fmtMoney(rc.rate_per_ton)}</div>` : ''}
+            ${rc.minimum_charge != null ? `<div><span style="color:var(--gray-500)">Min: </span>${fmtMoney(rc.minimum_charge)}</div>` : ''}
+            <div><span style="color:var(--gray-500)">Valid: </span>${fmtDate(rc.valid_from)} – ${fmtDate(rc.valid_until)}</div>
+          </div>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;">
+            <button class="btn btn-outline btn-sm" onclick="rejectRateCard('${rc.id}')">Reject</button>
+            <button class="btn btn-primary btn-sm" onclick="approveRateCard('${rc.id}')">Approve</button>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;margin-top:0.75rem;font-size:0.82rem;">
-          ${c.rate_per_km    ? `<div><span style="color:var(--gray-500)">Rate/km: </span>₹${fmtNum(c.rate_per_km)}</div>` : ''}
-          ${c.rate_per_ton   ? `<div><span style="color:var(--gray-500)">Rate/ton: </span>₹${fmtNum(c.rate_per_ton)}</div>` : ''}
-          ${c.minimum_charge ? `<div><span style="color:var(--gray-500)">Min: </span>₹${fmtNum(c.minimum_charge)}</div>` : ''}
-          <div><span style="color:var(--gray-500)">Valid: </span>${fmtDate(c.valid_from)} – ${fmtDate(c.valid_until)}</div>
-        </div>
-        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" onclick="reviewRateCard('${c.id}','approved')">Approve</button>
-          <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="openRateRejectModal('${c.id}')">Reject</button>
-        </div>
-      </div>
-    </div>`).join('');
+      </div>`).join('');
+  } catch(e) {
+    if (el) el.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${escHtml(e.message)}</p></div>`;
+  }
 }
 
-async function reviewRateCard(rcId, action) {
-  if (!confirm(`${action === 'approved' ? 'Approve' : 'Reject'} this rate card?`)) return;
+async function approveRateCard(rcId) {
   Loading.show();
   try {
-    await api('POST', `/api/admin/rate-cards/${rcId}/review`, { action });
-    Toast.success(`Rate card ${action}`);
+    await api('POST', `/api/admin/rate-cards/${rcId}/approve`, {});
+    Toast.success('Rate card approved');
     await initAdminRateApprovals();
-  } catch(e) { Toast.error(e.message); } finally { Loading.hide(); }
+  } catch(e) {
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
+  }
 }
 
-function openRateRejectModal(rcId) {
-  let modal = document.getElementById('rate-reject-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'rate-reject-modal';
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `<div class="modal-box" style="max-width:420px;">
-    <div class="modal-header">
-      <h3>Reject Rate Card</h3>
-      <button class="modal-close" onclick="closeModal('rate-reject-modal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label required">Rejection Reason</label>
-        <textarea class="form-control" id="rate-reject-reason" rows="3" placeholder="Explain why this rate card is rejected..."></textarea>
-      </div>
-      <div id="rate-reject-errors"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('rate-reject-modal')">Cancel</button>
-      <button class="btn btn-danger" onclick="submitRateReject('${rcId}')">Reject</button>
-    </div>
-  </div>`;
-  openModal('rate-reject-modal');
-}
-
-async function submitRateReject(rcId) {
-  const reason = document.getElementById('rate-reject-reason')?.value.trim();
-  if (!reason) {
-    document.getElementById('rate-reject-errors').innerHTML = '<div class="alert alert-danger">Reason is required</div>';
-    return;
-  }
+async function rejectRateCard(rcId) {
+  const reason = prompt('Reason for rejection:');
+  if (!reason || !reason.trim()) return;
   Loading.show();
   try {
-    await api('POST', `/api/admin/rate-cards/${rcId}/review`, { action: 'rejected', reason });
+    await api('POST', `/api/admin/rate-cards/${rcId}/reject`, { rejection_reason: reason.trim() });
     Toast.success('Rate card rejected');
-    closeModal('rate-reject-modal');
     await initAdminRateApprovals();
   } catch(e) {
-    document.getElementById('rate-reject-errors').innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
-  } finally { Loading.hide(); }
-}
-
-// ── Admin Trips ────────────────────────────────────────────────────────────────
-
-async function initAdminTrips() {
-  const el = document.getElementById('admin-trips-list');
-  if (!el) return;
-  if (!_adminRoutes.length) {
-    try { _adminRoutes = await api('GET', '/api/admin/routes'); } catch { _adminRoutes = []; }
+    Toast.error(e.message);
+  } finally {
+    Loading.hide();
   }
-  try {
-    const trips = await api('GET', '/api/admin/trips');
-    renderAdminTripsList(Array.isArray(trips) ? trips : []);
-  } catch(e) {
-    el.innerHTML = '<div class="empty-state"><p style="color:var(--danger)">Failed to load trips</p></div>';
-  }
-}
-
-function renderAdminTripsList(trips) {
-  const el = document.getElementById('admin-trips-list');
-  if (!trips.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚚</div><p>No trips yet</p></div>';
-    return;
-  }
-  el.innerHTML = trips.map(t => {
-    const route = `${escHtml(t.origin_city)}, ${escHtml(t.origin_state)} → ${escHtml(t.destination_city)}, ${escHtml(t.destination_state)}`;
-    return `
-    <div class="card" style="margin-bottom:0.75rem;">
-      <div class="card-body">
-        <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:0.5rem;">
-          <div>
-            <div style="font-size:0.8rem;color:var(--gray-500)">${escHtml(t.trip_number)} · ${escHtml(t.route_code)}</div>
-            <div style="font-weight:600">${escHtml(t.cargo_description)}</div>
-            <div style="font-size:0.85rem;color:var(--gray-600);margin-top:2px">${route}</div>
-          </div>
-          <div>${statusBadge(t.status)}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;margin-top:0.75rem;font-size:0.82rem;">
-          ${t.transporter_name ? `<div><span style="color:var(--gray-500)">Transporter: </span>${escHtml(t.transporter_name)}</div>` : '<div style="color:var(--gray-400)">Not assigned</div>'}
-          ${t.reg_number       ? `<div><span style="color:var(--gray-500)">Vehicle: </span>${escHtml(t.reg_number)}</div>` : ''}
-          ${t.cargo_weight_tons ? `<div><span style="color:var(--gray-500)">Weight: </span>${fmtNum(t.cargo_weight_tons)} tons</div>` : ''}
-          ${t.assignment_deadline ? `<div><span style="color:var(--gray-500)">Assign by: </span>${fmtDate(t.assignment_deadline)}</div>` : ''}
-        </div>
-        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;flex-wrap:wrap;">
-          <button class="btn btn-outline btn-sm" onclick="showAdminTripDetail('${t.id}')">View</button>
-          ${t.status === 'posted' ? `<button class="btn btn-primary btn-sm" onclick="openAssignModal('${t.id}')">Assign</button>` : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function showAdminTripDetail(tripId) {
-  let modal = document.getElementById('admin-trip-detail-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'admin-trip-detail-modal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = '<div class="modal-box" style="max-width:660px;"><div id="admin-trip-detail-body"></div></div>';
-    document.body.appendChild(modal);
-  }
-  document.getElementById('admin-trip-detail-body').innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
-  openModal('admin-trip-detail-modal');
-  try {
-    const t = await api('GET', `/api/admin/trips/${tripId}`);
-    const route = `${escHtml(t.origin_city)}, ${escHtml(t.origin_state)} → ${escHtml(t.destination_city)}, ${escHtml(t.destination_state)}`;
-    document.getElementById('admin-trip-detail-body').innerHTML = `
-      <div class="modal-header">
-        <h3>${escHtml(t.trip_number)}</h3>
-        <button class="modal-close" onclick="closeModal('admin-trip-detail-modal')">×</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
-          <span style="font-size:0.85rem;color:var(--gray-500)">${escHtml(t.route_code)}</span>
-          ${statusBadge(t.status)}
-        </div>
-        <div class="detail-grid">
-          <div><div style="font-size:0.75rem;color:var(--gray-500)">Route</div><div>${route}</div></div>
-          ${t.distance_km       ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Distance</div><div>${fmtNum(t.distance_km)} km</div></div>` : ''}
-          <div><div style="font-size:0.75rem;color:var(--gray-500)">Cargo</div><div>${escHtml(t.cargo_description)}</div></div>
-          ${t.cargo_weight_tons  ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Weight</div><div>${fmtNum(t.cargo_weight_tons)} tons</div></div>` : ''}
-          ${t.transporter_name   ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Transporter</div><div>${escHtml(t.transporter_name)}</div></div>` : ''}
-          ${t.transporter_contact ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Contact</div><div>${escHtml(t.transporter_contact)}</div></div>` : ''}
-          ${t.transporter_mobile  ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Mobile</div><div>${escHtml(t.transporter_mobile)}</div></div>` : ''}
-          ${t.reg_number          ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Vehicle</div><div>${escHtml(t.reg_number)} (${escHtml(t.vehicle_type||'')})</div></div>` : ''}
-          ${t.driver_name         ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Driver</div><div>${escHtml(t.driver_name)}</div></div>` : ''}
-          ${t.assigned_at         ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Assigned</div><div>${fmtDate(t.assigned_at)}</div></div>` : ''}
-          ${t.accepted_at         ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Accepted</div><div>${fmtDate(t.accepted_at)}</div></div>` : ''}
-          ${t.delivered_at        ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Delivered</div><div>${fmtDate(t.delivered_at)}</div></div>` : ''}
-          ${t.pod_file_path       ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">POD Ref</div><div>${escHtml(t.pod_file_path)}</div></div>` : ''}
-          ${t.pod_delivered_qty   ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Qty Delivered</div><div>${fmtNum(t.pod_delivered_qty)}</div></div>` : ''}
-          ${t.pod_notes           ? `<div style="grid-column:1/-1"><div style="font-size:0.75rem;color:var(--gray-500)">POD Notes</div><div>${escHtml(t.pod_notes)}</div></div>` : ''}
-        </div>
-        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap;">
-          <button class="btn btn-outline" onclick="closeModal('admin-trip-detail-modal')">Close</button>
-          ${t.status === 'posted' ? `<button class="btn btn-primary" onclick="openAssignModal('${t.id}')">Assign Transporter</button>` : ''}
-        </div>
-      </div>`;
-  } catch(e) {
-    document.getElementById('admin-trip-detail-body').innerHTML =
-      `<div class="card-body"><p style="color:var(--danger)">${escHtml(e.message)}</p>
-       <button class="btn btn-outline" onclick="closeModal('admin-trip-detail-modal')">Close</button></div>`;
-  }
-}
-
-async function openPostTripModal() {
-  if (!_adminRoutes.length) {
-    try { _adminRoutes = await api('GET', '/api/admin/routes'); } catch { _adminRoutes = []; }
-  }
-  const routeOptions = _adminRoutes.map(r =>
-    `<option value="${r.id}">${escHtml(r.route_code)} — ${escHtml(r.origin_city)} → ${escHtml(r.destination_city)}</option>`
-  ).join('');
-  let modal = document.getElementById('modal-post-trip');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-post-trip';
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `<div class="modal-box" style="max-width:520px;">
-    <div class="modal-header">
-      <h3>Post Trip</h3>
-      <button class="modal-close" onclick="closeModal('modal-post-trip')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid-2">
-        <div class="form-group" style="grid-column:1/-1">
-          <label class="form-label required">Route</label>
-          <select class="form-control" id="trip-route">
-            <option value="">Select route...</option>
-            ${routeOptions}
-          </select>
-        </div>
-        <div class="form-group" style="grid-column:1/-1">
-          <label class="form-label required">Cargo Description</label>
-          <input class="form-control" type="text" id="trip-cargo" placeholder="e.g. Alum 50kg bags">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Cargo Weight (tons)</label>
-          <input class="form-control" type="number" id="trip-weight" step="0.1" min="0" placeholder="0.0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Assignment Deadline</label>
-          <input class="form-control" type="date" id="trip-deadline">
-        </div>
-      </div>
-      <div id="trip-errors"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modal-post-trip')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitPostTrip()">Post Trip</button>
-    </div>
-  </div>`;
-  openModal('modal-post-trip');
-}
-
-async function submitPostTrip() {
-  const route_id            = document.getElementById('trip-route')?.value;
-  const cargo_description   = document.getElementById('trip-cargo')?.value.trim();
-  const cargo_weight_tons   = parseFloat(document.getElementById('trip-weight')?.value) || null;
-  const assignment_deadline = document.getElementById('trip-deadline')?.value || null;
-  const errEl               = document.getElementById('trip-errors');
-
-  if (!route_id)           { errEl.innerHTML = '<div class="alert alert-danger">Route is required</div>'; return; }
-  if (!cargo_description)  { errEl.innerHTML = '<div class="alert alert-danger">Cargo description is required</div>'; return; }
-
-  Loading.show();
-  try {
-    const res = await api('POST', '/api/admin/trips', { route_id, cargo_description, cargo_weight_tons, assignment_deadline });
-    Toast.success(`Trip ${res.trip_number} posted`);
-    closeModal('modal-post-trip');
-    await initAdminTrips();
-  } catch(e) {
-    errEl.innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
-  } finally { Loading.hide(); }
-}
-
-let _assignTripId = null;
-let _transporters = [];
-
-async function openAssignModal(tripId) {
-  _assignTripId = tripId;
-  if (!_transporters.length) {
-    try { _transporters = await api('GET', '/api/admin/transporters'); } catch { _transporters = []; }
-  }
-  const trOptions = _transporters.map(t =>
-    `<option value="${t.id}">${escHtml(t.company_name)}</option>`
-  ).join('');
-  let modal = document.getElementById('modal-assign-trip');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-assign-trip';
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
-    <div class="modal-header">
-      <h3>Assign Transporter</h3>
-      <button class="modal-close" onclick="closeModal('modal-assign-trip')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label required">Transporter</label>
-        <select class="form-control" id="assign-transporter" onchange="loadVehiclesForAssign(this.value)">
-          <option value="">Select transporter...</option>
-          ${trOptions}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label required">Vehicle</label>
-        <select class="form-control" id="assign-vehicle" disabled>
-          <option value="">Select transporter first...</option>
-        </select>
-      </div>
-      <div id="assign-errors"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modal-assign-trip')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAssignment()">Assign</button>
-    </div>
-  </div>`;
-  openModal('modal-assign-trip');
-}
-
-async function loadVehiclesForAssign(transporterId) {
-  const sel = document.getElementById('assign-vehicle');
-  if (!transporterId) { sel.innerHTML = '<option value="">Select transporter first...</option>'; sel.disabled = true; return; }
-  sel.innerHTML = '<option value="">Loading...</option>';
-  sel.disabled = true;
-  try {
-    const vehicles = await api('GET', `/api/admin/transporters/${transporterId}/vehicles`);
-    sel.innerHTML = '<option value="">Select vehicle...</option>' +
-      (Array.isArray(vehicles) ? vehicles : []).map(v =>
-        `<option value="${v.id}">${escHtml(v.reg_number)} (${escHtml(v.vehicle_type)})${v.capacity_tons ? ' ' + fmtNum(v.capacity_tons) + 't' : ''}</option>`
-      ).join('');
-    sel.disabled = false;
-  } catch(e) {
-    sel.innerHTML = '<option value="">Failed to load vehicles</option>';
-  }
-}
-
-async function submitAssignment() {
-  const transporter_id = document.getElementById('assign-transporter')?.value;
-  const vehicle_id     = document.getElementById('assign-vehicle')?.value;
-  const errEl          = document.getElementById('assign-errors');
-
-  if (!transporter_id) { errEl.innerHTML = '<div class="alert alert-danger">Transporter is required</div>'; return; }
-  if (!vehicle_id)     { errEl.innerHTML = '<div class="alert alert-danger">Vehicle is required</div>'; return; }
-
-  Loading.show();
-  try {
-    await api('POST', `/api/admin/trips/${_assignTripId}/assign`, { transporter_id, vehicle_id });
-    Toast.success('Trip assigned to transporter');
-    closeModal('modal-assign-trip');
-    closeModal('admin-trip-detail-modal');
-    await initAdminTrips();
-  } catch(e) {
-    errEl.innerHTML = `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
-  } finally { Loading.hide(); }
 }

@@ -2,7 +2,7 @@
 
 let _adminPOs = {};
 
-// ── PO List ────────────────────────────────────────────────────────────
+// ── PO List ───────────────────────────────────────────────────────────
 
 async function initAdminPOs() {
   await Promise.all([
@@ -68,13 +68,14 @@ function renderAdminPOTab(status, pos) {
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;flex-wrap:wrap;">
           <button class="btn btn-outline btn-sm" onclick="showAdminPODetail('${p.id}')">View Details</button>
+          ${p.status === 'acknowledged' ? `<button class="btn btn-primary btn-sm" onclick="openDispatchModal('${p.id}','${escHtml(p.po_number)}')">Mark Dispatched</button>` : ''}
           ${p.status === 'dispatched' ? `<button class="btn btn-primary btn-sm" onclick="openGRNModal('${p.id}','${escHtml(p.po_number)}',${p.quantity})">Record GRN</button>` : ''}
         </div>
       </div>
     </div>`).join('');
 }
 
-// ── PO Detail Modal ─────────────────────────────────────────────────
+// ── PO Detail Modal ───────────────────────────────────────────────────
 
 async function showAdminPODetail(poId) {
   let modal = document.getElementById('admin-po-detail-modal');
@@ -130,6 +131,9 @@ function renderAdminPODetailModal(po) {
       ${po.grn ? renderAdminGRNSummary(po.grn) : ''}
       <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap;">
         <button class="btn btn-outline" onclick="closeModal('admin-po-detail-modal')">Close</button>
+        ${po.status === 'acknowledged'
+          ? `<button class="btn btn-primary" onclick="openDispatchModal('${po.id}','${escHtml(po.po_number)}')">Mark Dispatched</button>`
+          : ''}
         ${po.status === 'dispatched'
           ? `<button class="btn btn-primary" onclick="openGRNModal('${po.id}','${escHtml(po.po_number)}',${po.quantity})">Record GRN</button>`
           : ''}
@@ -149,6 +153,77 @@ function renderAdminGRNSummary(grn) {
       ${grn.rejection_reason ? `<div style="margin-top:0.5rem;font-size:0.82rem;color:var(--danger)">⚠ ${escHtml(grn.rejection_reason)}</div>` : ''}
       <div style="font-size:0.75rem;color:var(--gray-400);margin-top:0.5rem">Received: ${fmtDate(grn.received_at)}</div>
     </div>`;
+}
+
+// ── Dispatch Modal ────────────────────────────────────────────────────
+
+function openDispatchModal(poId, poNumber) {
+  let modal = document.getElementById('dispatch-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'dispatch-modal';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+  const today = new Date().toISOString().split('T')[0];
+  modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>Record Dispatch — ${escHtml(poNumber)}</h3>
+      <button class="modal-close" onclick="closeModal('dispatch-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label required">Transport / Carrier</label>
+        <input class="form-control" id="disp-transport" placeholder="e.g. Speed Logistics">
+      </div>
+      <div class="form-group">
+        <label class="form-label">LR Number</label>
+        <input class="form-control" id="disp-lr" placeholder="Lorry Receipt Number">
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Dispatch Date</label>
+        <input class="form-control" type="date" id="disp-date" value="${today}">
+      </div>
+      <div id="disp-errors"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('dispatch-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDispatch('${poId}')">Mark as Dispatched</button>
+    </div>
+  </div>`;
+  openModal('dispatch-modal');
+}
+
+async function submitDispatch(poId) {
+  const transport = document.getElementById('disp-transport').value.trim();
+  const date = document.getElementById('disp-date').value;
+  if (!transport) {
+    document.getElementById('disp-errors').innerHTML =
+      '<div class="alert alert-danger">Transport / carrier is required</div>';
+    return;
+  }
+  if (!date) {
+    document.getElementById('disp-errors').innerHTML =
+      '<div class="alert alert-danger">Dispatch date is required</div>';
+    return;
+  }
+  Loading.show();
+  try {
+    await api('POST', `/api/admin/pos/${poId}/dispatch`, {
+      dispatch_transport: transport,
+      dispatch_lr_number: document.getElementById('disp-lr').value.trim() || null,
+      dispatched_at: date,
+    });
+    Toast.success('PO marked as dispatched');
+    closeModal('dispatch-modal');
+    closeModal('admin-po-detail-modal');
+    await initAdminPOs();
+  } catch(e) {
+    document.getElementById('disp-errors').innerHTML =
+      `<div class="alert alert-danger">${escHtml(e.message)}</div>`;
+  } finally {
+    Loading.hide();
+  }
 }
 
 // ── GRN Modal ─────────────────────────────────────────────────────────
