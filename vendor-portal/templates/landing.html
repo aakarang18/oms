@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amar Alum — Vendor & Transporter Portal</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%); min-height: 100vh; display: flex; flex-direction: column; }
+
+    .landing-header {
+      padding: 20px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-logo {
+      width: 46px; height: 46px;
+      background: #f59e0b;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 900; color: #1e3a5f;
+    }
+    .brand-text .name  { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .brand-text .sub   { font-size: .72rem; color: rgba(255,255,255,.55); }
+
+    .landing-main {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+    .landing-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 64px;
+      max-width: 960px;
+      width: 100%;
+      align-items: center;
+    }
+    .landing-copy h1 {
+      font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .landing-copy h1 span { color: #f59e0b; }
+    .landing-copy p { color: rgba(255,255,255,.65); font-size: 1.0625rem; margin-bottom: 32px; }
+    .portal-links { display: flex; flex-direction: column; gap: 12px; }
+    .portal-link {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      color: rgba(255,255,255,.8);
+      font-size: .9375rem;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    .portal-link:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); color: #fff; }
+    .portal-link-icon { font-size: 1.4rem; }
+    .portal-link-label { font-weight: 600; }
+    .portal-link-desc  { font-size: .78rem; color: rgba(255,255,255,.45); margin-top: 1px; }
+
+    /* Login card */
+    .login-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 48px rgba(0,0,0,.3);
+      overflow: hidden;
+    }
+    .login-card-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .login-tab {
+      flex: 1; padding: 14px;
+      background: var(--gray-50);
+      border: none; cursor: pointer;
+      font-size: .875rem; font-weight: 600;
+      color: var(--gray-500);
+      transition: all .15s;
+    }
+    .login-tab.active {
+      background: #fff;
+      color: var(--brand-dark);
+      border-bottom: 2px solid var(--brand-mid);
+    }
+    .login-card-body { padding: 28px; }
+    .login-card-body h2 { font-size: 1.25rem; margin-bottom: 6px; color: var(--brand-dark); }
+    .login-card-body p  { font-size: .875rem; margin-bottom: 24px; }
+
+    .otp-input-group { display: flex; gap: 8px; }
+    .otp-input-group input[type=text] { flex: 1; }
+    .otp-input-group .btn { flex-shrink: 0; }
+
+    .otp-section { display: none; }
+    .otp-section.show { display: block; }
+
+    .divider {
+      text-align: center; position: relative; margin: 20px 0;
+      color: var(--gray-400); font-size: .78rem;
+    }
+    .divider::before {
+      content: ''; position: absolute;
+      top: 50%; left: 0; right: 0; height: 1px;
+      background: var(--gray-200);
+    }
+    .divider span { background: #fff; padding: 0 12px; position: relative; }
+
+    .register-link {
+      text-align: center; margin-top: 20px;
+      font-size: .8375rem; color: var(--gray-500);
+    }
+    .register-link a { color: var(--brand-mid); font-weight: 600; }
+
+    .landing-footer {
+      text-align: center; padding: 20px;
+      font-size: .78rem; color: rgba(255,255,255,.3);
+    }
+
+    @media (max-width: 768px) {
+      .landing-grid { grid-template-columns: 1fr; gap: 32px; }
+      .landing-copy { text-align: center; }
+      .landing-copy h1 { font-size: 1.75rem; }
+      .portal-links { display: none; }
+      .landing-header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="landing-header">
+  <div class="brand">
+    <div class="brand-logo">AA</div>
+    <div class="brand-text">
+      <div class="name">Amar Alum & Allied Chemicals Pvt. Ltd.</div>
+      <div class="sub">Vendor & Transporter Portal</div>
+    </div>
+  </div>
+</header>
+
+<main class="landing-main">
+  <div class="landing-grid">
+
+    <!-- Left: Copy + quick links -->
+    <div class="landing-copy">
+      <h1>Your Partner<br>Portal for <span>Amar Alum</span></h1>
+      <p>Manage registrations, quotations, purchase orders, trips, and payments — all in one place.</p>
+      <div class="portal-links">
+        <div class="portal-link" onclick="setPortal('vendor')">
+          <span class="portal-link-icon">🏭</span>
+          <div>
+            <div class="portal-link-label">Vendor Portal</div>
+            <div class="portal-link-desc">Raw material suppliers — quotes, POs & invoices</div>
+          </div>
+        </div>
+        <div class="portal-link" onclick="setPortal('transporter')">
+          <span class="portal-link-icon">🚛</span>
+          <div>
+            <div class="portal-link-label">Transporter Portal</div>
+            <div class="portal-link-desc">Logistics partners — trips, POD & rate cards</div>
+          </div>
+        </div>
+        <div class="portal-link" onclick="setPortal('admin')">
+          <span class="portal-link-icon">⚙️</span>
+          <div>
+            <div class="portal-link-label">Admin Portal</div>
+            <div class="portal-link-desc">Internal team — approvals, RFQs & compliance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Login card -->
+    <div class="login-card">
+      <div class="login-card-tabs">
+        <button class="login-tab active" onclick="switchLoginTab('login',this)">Sign In</button>
+        <button class="login-tab" onclick="switchLoginTab('register',this)">Register</button>
+      </div>
+
+      <!-- LOGIN TAB -->
+      <div id="tab-login" class="login-card-body">
+        <h2>Welcome back</h2>
+        <p>Enter your registered mobile number to receive an OTP.</p>
+
+        <div id="login-step-1">
+          <div class="form-group">
+            <label for="login-mobile">Mobile Number <span class="required">*</span></label>
+            <input type="tel" id="login-mobile" placeholder="10-digit mobile number" maxlength="10">
+          </div>
+          <button class="btn btn-dark btn-lg" style="width:100%" onclick="requestLoginOtp()">
+            Send OTP
+          </button>
+        </div>
+
+        <div id="login-step-2" class="otp-section">
+          <div class="alert alert-info">
+            OTP sent to <strong id="login-mobile-display"></strong>.
+            <a href="#" onclick="backToStep1()" style="margin-left:8px">Change</a>
+          </div>
+          <div class="form-group">
+            <label for="login-otp">Enter OTP <span class="required">*</span></label>
+            <div class="otp-input-group">
+              <input type="text" id="login-otp" placeholder="6-digit OTP"
+                     maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
+              <button class="btn btn-outline" onclick="requestLoginOtp(true)" id="resend-btn">
+                Resend
+              </button>
+            </div>
+          </div>
+          <button class="btn btn-dark btn-lg" style="width:100%" onclick="verifyLoginOtp()">
+            Verify & Sign In
+          </button>
+        </div>
+
+        <div id="login-dev-otp" style="display:none;margin-top:16px" class="alert alert-warning">
+          <strong>DEV MODE — OTP:</strong> <span id="dev-otp-val"></span>
+        </div>
+      </div>
+
+      <!-- REGISTER TAB -->
+      <div id="tab-register" class="login-card-body" style="display:none">
+        <h2>Create Account</h2>
+        <p>Register as a vendor or transporter to get started.</p>
+
+        <div class="form-group">
+          <label>I am a <span class="required">*</span></label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="reg-type" value="vendor" checked> Vendor (Supplier)
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="reg-type" value="transporter"> Transporter (Logistics)
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="reg-mobile">Mobile Number <span class="required">*</span></label>
+          <input type="tel" id="reg-mobile" placeholder="10-digit mobile number" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address (optional)</label>
+          <input type="email" id="reg-email" placeholder="company@example.com">
+        </div>
+
+        <div id="reg-step-otp" class="otp-section">
+          <div class="form-group">
+            <label for="reg-otp">OTP sent to your mobile <span class="required">*</span></label>
+            <input type="text" id="reg-otp" placeholder="6-digit OTP"
+                   maxlength="6" inputmode="numeric">
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" style="width:100%" id="reg-btn"
+                onclick="startRegistration()">
+          Send OTP & Continue
+        </button>
+
+        <div id="reg-dev-otp" style="display:none;margin-top:16px" class="alert alert-warning">
+          <strong>DEV MODE — OTP:</strong> <span id="reg-dev-otp-val"></span>
+        </div>
+
+        <div class="register-link">
+          Already registered? <a href="#" onclick="switchLoginTab('login', document.querySelector('.login-tab'))">Sign in</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="landing-footer">
+  &copy; 2026 Amar Alum & Allied Chemicals Pvt. Ltd. All rights reserved.
+</footer>
+
+<div id="toast-container"></div>
+
+<script src="/static/js/common.js"></script>
+<script>
+let _regUserId = null;
+let _regStep   = 'mobile'; // 'mobile' | 'otp'
+
+function setPortal(type) {
+  document.querySelectorAll('.login-tab')[0].click();
+  document.getElementById('login-mobile')?.focus();
+}
+
+function switchLoginTab(tab, btn) {
+  document.getElementById('tab-login').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('tab-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelector('.login-tab').classList.add('active');
+}
+
+// ── Login flow ────────────────────────────────────────────────────
+async function requestLoginOtp(isResend = false) {
+  const mobile = document.getElementById('login-mobile').value.trim();
+  if (!validateMobile(mobile)) { Toast.error('Enter a valid 10-digit mobile number'); return; }
+
+  Loading.show();
+  try {
+    const data = await api('POST', '/api/auth/request-otp', { mobile });
+    document.getElementById('login-step-1').style.display = 'none';
+    document.getElementById('login-step-2').classList.add('show');
+    document.getElementById('login-mobile-display').textContent = mobile;
+    if (data.dev_otp) {
+      document.getElementById('login-dev-otp').style.display = 'block';
+      document.getElementById('dev-otp-val').textContent = data.dev_otp;
+    }
+    if (isResend) Toast.success('OTP resent');
+  } catch(e) {
+    Toast.error(e.message);
+  } finally { Loading.hide(); }
+}
+
+function backToStep1() {
+  document.getElementById('login-step-1').style.display = 'block';
+  document.getElementById('login-step-2').classList.remove('show');
+  document.getElementById('login-otp').value = '';
+}
+
+async function verifyLoginOtp() {
+  const mobile = document.getElementById('login-mobile').value.trim();
+  const otp    = document.getElementById('login-otp').value.trim();
+  if (!otp || otp.length < 6) { Toast.error('Enter the 6-digit OTP'); return; }
+
+  Loading.show();
+  try {
+    const data = await api('POST', '/api/auth/verify-otp', { mobile, otp });
+    Toast.success('Login successful! Redirecting…');
+    setTimeout(() => { window.location.href = data.redirect; }, 800);
+  } catch(e) {
+    Toast.error(e.message);
+  } finally { Loading.hide(); }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const step2 = document.getElementById('login-step-2');
+  if (step2.classList.contains('show')) verifyLoginOtp();
+  else requestLoginOtp();
+});
+
+// ── Register flow ─────────────────────────────────────────────────
+async function startRegistration() {
+  if (_regStep === 'otp') { verifyRegOtp(); return; }
+
+  const type   = document.querySelector('input[name="reg-type"]:checked')?.value || 'vendor';
+  const mobile = document.getElementById('reg-mobile').value.trim();
+  const email  = document.getElementById('reg-email').value.trim() || null;
+
+  if (!validateMobile(mobile)) { Toast.error('Enter a valid 10-digit mobile number'); return; }
+
+  Loading.show();
+  try {
+    const data = await api('POST', `/api/register/${type}/init`, { mobile, email });
+    _regUserId = data.user_id;
+    _regStep = 'otp';
+    document.getElementById('reg-step-otp').classList.add('show');
+    document.getElementById('reg-btn').textContent = 'Verify OTP & Continue';
+    if (data.dev_otp) {
+      document.getElementById('reg-dev-otp').style.display = 'block';
+      document.getElementById('reg-dev-otp-val').textContent = data.dev_otp;
+    }
+    Toast.success('OTP sent to your mobile');
+  } catch(e) {
+    Toast.error(e.message);
+  } finally { Loading.hide(); }
+}
+
+async function verifyRegOtp() {
+  const otp  = document.getElementById('reg-otp').value.trim();
+  const type = document.querySelector('input[name="reg-type"]:checked')?.value || 'vendor';
+  if (!otp || otp.length < 6) { Toast.error('Enter the 6-digit OTP'); return; }
+
+  Loading.show();
+  try {
+    await api('POST', `/api/register/${type}/verify-otp`, { user_id: _regUserId, otp });
+    Toast.success('Verified! Taking you to registration…');
+    setTimeout(() => { window.location.href = `/${type}`; }, 800);
+  } catch(e) {
+    Toast.error(e.message);
+  } finally { Loading.hide(); }
+}
+</script>
+</body>
+</html>

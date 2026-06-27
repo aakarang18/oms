@@ -26,7 +26,7 @@ function renderRegToolbar() {
       <select class="form-control" style="width:180px;" onchange="switchRegStatus(this.value)">
         ${STATUS_FILTERS.map(s => `<option value="${s}" ${s === _regCurrentStatus ? 'selected' : ''}>${s.replace('_', ' ')}</option>`).join('')}
       </select>
-      <button class="btn btn-outline btn-sm" onclick="loadRegistrationList()">&#8634; Refresh</button>
+      <button class="btn btn-outline btn-sm" onclick="loadRegistrationList()">↺ Refresh</button>
     </div>`;
 }
 
@@ -110,7 +110,7 @@ function renderRegDetailModal(data) {
 
   const vendorExtra = isVendor ? `
     <div class="detail-section">
-      <h4>Categories &amp; Products</h4>
+      <h4>Categories & Products</h4>
       ${(data.categories || []).length
         ? `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">${(data.categories || []).map(c => `<span class="badge badge-info">${escHtml(c.category_name)}</span>`).join('')}</div>`
         : '<p style="color:var(--gray-500);">No categories</p>'}
