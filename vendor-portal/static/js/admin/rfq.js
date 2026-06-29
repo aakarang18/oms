@@ -4,7 +4,7 @@ let _adminRFQs = {};
 let _adminRFQDetail = null;
 let _approvedVendors = [];
 
-// ── RFQ List ──────────────────────────────────────────────────────────
+// ── RFQ List ──────────────────────────────────────────────────────────────
 
 async function initAdminRFQs() {
   // Load all tabs in parallel
@@ -72,7 +72,7 @@ function renderAdminRFQTab(status, rfqs) {
     </div>`).join('');
 }
 
-// ── RFQ Detail Modal ─────────────────────────────────────────────────
+// ── RFQ Detail Modal ───────────────────────────────────────────────────────────────
 
 async function showAdminRFQDetail(rfqId) {
   let modal = document.getElementById('admin-rfq-detail-modal');
@@ -193,7 +193,7 @@ function renderQuoteComparisonTable(rfq) {
   </table></div>`;
 }
 
-// ── RFQ Actions ───────────────────────────────────────────────────────
+// ── RFQ Actions ────────────────────────────────────────────────────────────────
 
 async function publishRFQ(rfqId) {
   if (!confirm('Publish this RFQ to vendors?')) return;
@@ -243,7 +243,42 @@ async function awardRFQ(rfqId, quoteId, vendorName) {
   finally { Loading.hide(); }
 }
 
-// ── Create RFQ Modal ──────────────────────────────────────────────────
+// ── Quote Comparison ──────────────────────────────────────────────────────────────
+
+async function initQuoteComparison() {
+  const el = document.getElementById('quote-compare-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</div>';
+  try {
+    const [closed, awarded] = await Promise.all([
+      api('GET', '/api/admin/rfqs?status=closed').catch(() => []),
+      api('GET', '/api/admin/rfqs?status=awarded').catch(() => []),
+    ]);
+    const rfqs = [...(Array.isArray(closed) ? closed : []), ...(Array.isArray(awarded) ? awarded : [])];
+    if (!rfqs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>No closed or awarded RFQs to compare</p></div>';
+      return;
+    }
+    el.innerHTML = rfqs.map(r => `
+      <div class="card" style="margin-bottom:0.75rem;">
+        <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+          <div>
+            <div style="font-size:0.8rem;color:var(--gray-500)">${escHtml(r.rfq_number)}</div>
+            <div style="font-weight:600;">${escHtml(r.title)}</div>
+            <div style="font-size:0.82rem;color:var(--gray-500)">${r.quote_count != null ? `${r.quote_count} quote(s)` : ''}</div>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            ${statusBadge(r.status)}
+            <button class="btn btn-primary btn-sm" onclick="showAdminRFQDetail('${r.id}')">Compare Quotes</button>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${escHtml(e.message)}</p></div>`;
+  }
+}
+
+// ── Create RFQ Modal ──────────────────────────────────────────────────────────────
 
 async function openCreateRFQModal() {
   try {

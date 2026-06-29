@@ -3,7 +3,7 @@
 let _adminRoutes = [];
 let _approvedTransporters = [];
 
-// ── Admin Trips ────────────────────────────────────────────────────────────────
+// ── Admin Trips ─────────────────────────────────────────────────────────────────────────────
 
 async function initAdminTrips() {
   const el = document.getElementById('admin-trips-list');
@@ -184,7 +184,7 @@ async function approvePOD(tripId) {
   }
 }
 
-// ── Admin Routes ───────────────────────────────────────────────────────────────
+// ── Admin Routes ─────────────────────────────────────────────────────────────────────────────
 
 async function initAdminRoutes() {
   const el = document.getElementById('routes-list');
@@ -307,7 +307,7 @@ async function submitCreateRoute() {
   }
 }
 
-// ── Admin Rate Card Approvals ──────────────────────────────────────────────────
+// ── Admin Rate Card Approvals ────────────────────────────────────────────────────────────────
 
 async function initAdminRateApprovals() {
   const el = document.getElementById('rate-approval-list');
@@ -372,5 +372,35 @@ async function rejectRateCard(rcId) {
     Toast.error(e.message);
   } finally {
     Loading.hide();
+  }
+}
+
+// ── Admin GRNs ────────────────────────────────────────────────────────────────────────────
+
+async function initAdminGRNs() {
+  const el = document.getElementById('admin-grns-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-500);">Loading...</div>';
+  try {
+    const grns = await api('GET', '/api/admin/grns');
+    const list = Array.isArray(grns) ? grns : [];
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No GRNs recorded yet. Record a GRN from the Purchase Orders section.</p></div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>GRN Number</th><th>PO Number</th><th>Vendor</th><th>Qty Ordered</th><th>Qty Received</th><th>Quality</th><th>Received At</th></tr></thead>
+      <tbody>${list.map(g => `<tr>
+        <td><strong>${escHtml(g.grn_number)}</strong></td>
+        <td>${escHtml(g.po_number)}</td>
+        <td>${escHtml(g.vendor_name || '—')}</td>
+        <td>${g.qty_ordered != null ? fmtNum(g.qty_ordered) : '—'}</td>
+        <td>${g.qty_received != null ? fmtNum(g.qty_received) : '—'}</td>
+        <td><span class="badge badge-${g.quality_status === 'accepted' ? 'approved' : g.quality_status === 'rejected' ? 'danger' : 'warning'}">${escHtml(g.quality_status || '—')}</span></td>
+        <td>${g.received_at ? fmtDate(g.received_at) : '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${escHtml(e.message)}</p></div>`;
   }
 }

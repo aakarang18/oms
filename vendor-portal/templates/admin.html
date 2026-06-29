@@ -242,10 +242,12 @@
         </div>
       </div>
 
-      <!-- Remaining sections — placeholders for Phase 2+ -->
-      <div id="section-quotes"       class="portal-section" style="display:none">
+      <!-- Remaining sections -->
+      <div id="section-quotes" class="portal-section" style="display:none">
         <div class="page-header"><h1>Quote Comparison</h1></div>
-        <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">💬</div><p>Select a closed RFQ to compare quotes</p></div></div></div>
+        <div class="card"><div class="card-body" id="quote-compare-list">
+          <div class="empty-state"><div class="empty-icon">💬</div><p>Loading...</p></div>
+        </div></div>
       </div>
       <div id="section-pos" class="portal-section" style="display:none">
         <div class="page-header"><h1>Purchase Orders</h1></div>
@@ -277,9 +279,10 @@
         </div>
       </div>
       <div id="section-grns" class="portal-section" style="display:none">
-        <!-- GRNs are now accessed via the PO section / PO detail -->
         <div class="page-header"><h1>Goods Receipt Notes</h1></div>
-        <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">✅</div><p>Go to Purchase Orders → Dispatched tab to record a GRN</p></div></div></div>
+        <div class="card"><div class="card-body" id="admin-grns-list">
+          <div class="empty-state"><div class="empty-icon">✅</div><p>Loading...</p></div>
+        </div></div>
       </div>
       <div id="section-routes"       class="portal-section" style="display:none">
         <div class="page-header">
