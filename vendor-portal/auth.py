@@ -29,7 +29,7 @@ ROLE_PORTAL = {
 ADMIN_ROLES = {"super_admin", "procurement_admin", "transport_admin", "finance_admin"}
 
 
-# ─── OTP ─────────────────────────────────────────────────────────────────────────────
+# ─── OTP ─────────────────────────────────────────────────────────────────────────────────
 
 def generate_otp() -> str:
     return f"{random.SystemRandom().randint(100000, 999999)}"
@@ -50,6 +50,7 @@ def create_otp(user_id: str, purpose: str) -> str:
     expires = _utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
     conn = get_db()
     try:
+        # Invalidate any previous unused OTPs for this user+purpose
         conn.execute(
             "UPDATE otp_tokens SET used=1 WHERE user_id=? AND purpose=? AND used=0",
             (user_id, purpose)
@@ -94,7 +95,7 @@ def validate_otp(user_id: str, otp: str, purpose: str) -> tuple[bool, str]:
         conn.close()
 
 
-# ─── SESSION ─────────────────────────────────────────────────────────────────────────────
+# ─── SESSION ──────────────────────────────────────────────────────────────────────────────
 
 def create_session(user_id: str) -> str:
     """Delete existing sessions for user, create new one, return session token."""
@@ -103,6 +104,7 @@ def create_session(user_id: str) -> str:
     expires = now + timedelta(minutes=SESSION_TIMEOUT_MINUTES)
     conn = get_db()
     try:
+        # Single active session per user
         conn.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
         conn.execute(
             """INSERT INTO sessions(id,user_id,ip_address,user_agent,expires_at,created_at)
@@ -137,6 +139,7 @@ def load_session(token: str):
             conn.execute("DELETE FROM sessions WHERE id=?", (token,))
             conn.commit()
             return None
+        # Roll expiry
         new_expiry = (_utcnow() + timedelta(minutes=SESSION_TIMEOUT_MINUTES)).isoformat()
         conn.execute("UPDATE sessions SET expires_at=? WHERE id=?", (new_expiry, token))
         user = conn.execute(
@@ -197,7 +200,7 @@ def is_locked(user) -> bool:
     return _utcnow() < datetime.fromisoformat(user["locked_until"])
 
 
-# ─── DECORATORS ───────────────────────────────────────────────────────────────────────────
+# ─── DECORATORS ────────────────────────────────────────────────────────────────────────
 
 def _get_token():
     return (request.cookies.get("portal_session")
@@ -246,7 +249,7 @@ def transporter_required(f):
     return roles_required("transporter_admin", "transporter_user")(f)
 
 
-# ─── AUDIT ───────────────────────────────────────────────────────────────────────────────
+# ─── AUDIT ─────────────────────────────────────────────────────────────────────────────────
 
 def audit(actor_id: str, entity_type: str, entity_id: str, action: str,
           before=None, after=None):
@@ -270,10 +273,10 @@ def audit(actor_id: str, entity_type: str, entity_id: str, action: str,
         conn.close()
 
 
-# ─── HELPERS ────────────────────────────────────────────────────────────────────────────
+# ─── HELPERS ─────────────────────────────────────────────────────────────────────────────
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def new_id() -> str:
