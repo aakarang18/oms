@@ -215,17 +215,17 @@
           <button class="btn btn-primary" onclick="openCreateRFQModal()">+ Create RFQ</button>
         </div>
         <div class="tabs">
-          <button class="tab-btn active" data-tab="rfq-draft">Draft</button>
-          <button class="tab-btn" data-tab="rfq-published">Published</button>
+          <button class="tab-btn" data-tab="rfq-draft">Draft</button>
+          <button class="tab-btn active" data-tab="rfq-published">Published</button>
           <button class="tab-btn" data-tab="rfq-closed">Closed</button>
           <button class="tab-btn" data-tab="rfq-awarded">Awarded</button>
         </div>
-        <div class="tab-panel active" data-tab="rfq-draft">
+        <div class="tab-panel" data-tab="rfq-draft">
           <div class="card"><div class="card-body" id="rfq-draft-list">
             <div class="empty-state"><div class="empty-icon">📋</div><p>No draft RFQs</p></div>
           </div></div>
         </div>
-        <div class="tab-panel" data-tab="rfq-published">
+        <div class="tab-panel active" data-tab="rfq-published">
           <div class="card"><div class="card-body" id="rfq-published-list">
             <div class="empty-state"><div class="empty-icon">📋</div><p>No published RFQs</p></div>
           </div></div>
@@ -242,7 +242,7 @@
         </div>
       </div>
 
-      <!-- Remaining sections -->
+      <!-- Remaining sections — placeholders for Phase 2+ -->
       <div id="section-quotes"       class="portal-section" style="display:none">
         <div class="page-header"><h1>Quote Comparison</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">💬</div><p>Select a closed RFQ to compare quotes</p></div></div></div>
@@ -277,6 +277,7 @@
         </div>
       </div>
       <div id="section-grns" class="portal-section" style="display:none">
+        <!-- GRNs are now accessed via the PO section / PO detail -->
         <div class="page-header"><h1>Goods Receipt Notes</h1></div>
         <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">✅</div><p>Go to Purchase Orders → Dispatched tab to record a GRN</p></div></div></div>
       </div>

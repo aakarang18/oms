@@ -17,12 +17,13 @@ def list_admin_invoices():
     try:
         q = """
             SELECT i.*,
-                   u.name as party_name,
+                   COALESCE(v.company_name, tr.company_name) as party_name,
                    p.po_number,
                    g.grn_number,
                    t.trip_number
             FROM invoices i
-            LEFT JOIN users u ON u.entity_id = i.party_id
+            LEFT JOIN vendors v       ON v.id = i.party_id AND i.party_type = 'vendor'
+            LEFT JOIN transporters tr ON tr.id = i.party_id AND i.party_type = 'transporter'
             LEFT JOIN purchase_orders p ON p.id = i.linked_po_id
             LEFT JOIN grns g ON g.id = i.linked_grn_id
             LEFT JOIN trips t ON t.id = i.linked_trip_id
@@ -49,13 +50,15 @@ def get_admin_invoice(inv_id):
     try:
         row = conn.execute("""
             SELECT i.*,
-                   u.name as party_name, u.email as party_email,
-                   p.po_number, p.total_value as po_value,
-                   g.grn_number, g.received_qty,
+                   COALESCE(v.company_name, tr.company_name) as party_name,
+                   COALESCE(v.contact_email, tr.contact_email) as party_email,
+                   p.po_number, p.grand_total as po_value,
+                   g.grn_number, g.qty_received as received_qty,
                    t.trip_number,
                    r.origin_city, r.destination_city as dest_city
             FROM invoices i
-            LEFT JOIN users u ON u.entity_id = i.party_id
+            LEFT JOIN vendors v       ON v.id = i.party_id AND i.party_type = 'vendor'
+            LEFT JOIN transporters tr ON tr.id = i.party_id AND i.party_type = 'transporter'
             LEFT JOIN purchase_orders p ON p.id = i.linked_po_id
             LEFT JOIN grns g ON g.id = i.linked_grn_id
             LEFT JOIN trips t ON t.id = i.linked_trip_id
@@ -118,10 +121,11 @@ def list_admin_payments():
         rows = conn.execute("""
             SELECT pay.*,
                    i.invoice_ref, i.grand_total, i.party_type, i.party_id,
-                   u.name as party_name
+                   COALESCE(v.company_name, tr.company_name) as party_name
             FROM payments pay
             JOIN invoices i ON i.id = pay.invoice_id
-            LEFT JOIN users u ON u.entity_id = i.party_id
+            LEFT JOIN vendors v       ON v.id = i.party_id AND i.party_type = 'vendor'
+            LEFT JOIN transporters tr ON tr.id = i.party_id AND i.party_type = 'transporter'
             ORDER BY pay.created_at DESC
         """).fetchall()
         return jsonify([dict(r) for r in rows])
@@ -167,6 +171,7 @@ def record_payment():
             VALUES (?,?,?,?, ?,?,?,?,?)
         """, (pay_id, invoice_id, payment_amount, payment_date,
                utr_number, payment_mode, g.user['id'], notes, now))
+        # Mark invoice as paid
         conn.execute(
             "UPDATE invoices SET status='paid', updated_at=? WHERE id=?",
             (now, invoice_id)
@@ -190,9 +195,10 @@ def list_approved_invoices():
         rows = conn.execute("""
             SELECT i.id, i.invoice_ref, i.grand_total,
                    i.party_type, i.party_id,
-                   u.name as party_name
+                   COALESCE(v.company_name, tr.company_name) as party_name
             FROM invoices i
-            LEFT JOIN users u ON u.entity_id = i.party_id
+            LEFT JOIN vendors v       ON v.id = i.party_id AND i.party_type = 'vendor'
+            LEFT JOIN transporters tr ON tr.id = i.party_id AND i.party_type = 'transporter'
             WHERE i.status='approved'
             ORDER BY i.reviewed_at DESC
         """).fetchall()
