@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         _regCurrentTab = 'vendors';
         initAdminRegistrations();
       } else if (sec === 'section-transporter-reg') {
+        // Route to the shared registration panel
         showSection('section-vendor-reg');
         setActiveNav('section-vendor-reg');
         _regCurrentTab = 'transporters';
@@ -91,6 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
         initAdminRateApprovals();
       } else if (sec === 'section-trips') {
         initAdminTrips();
+      } else if (sec === 'section-quotes') {
+        initQuoteComparison();
+      } else if (sec === 'section-grns') {
+        initAdminGRNs();
       } else if (sec === 'section-invoices') {
         initAdminInvoices();
       } else if (sec === 'section-payments') {

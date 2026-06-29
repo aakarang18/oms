@@ -3,8 +3,9 @@
 
 'use strict';
 
+const TAB_DEFAULT_STATUS = { vendors: 'under_review', transporters: 'pending' };
 let _regCurrentTab = 'vendors';
-let _regCurrentStatus = 'under_review';
+let _regCurrentStatus = TAB_DEFAULT_STATUS['vendors'];
 let _regList = [];
 
 const STATUS_FILTERS = ['under_review', 'submitted', 'info_requested', 'approved', 'rejected', 'draft', 'pending'];
@@ -32,6 +33,7 @@ function renderRegToolbar() {
 
 async function switchRegTab(tab) {
   _regCurrentTab = tab;
+  _regCurrentStatus = TAB_DEFAULT_STATUS[tab] || 'under_review';
   renderRegToolbar();
   await loadRegistrationList();
 }

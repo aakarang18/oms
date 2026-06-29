@@ -93,6 +93,7 @@ R2 = uid()
 
 # Rate cards
 RC1 = uid()
+RC2 = uid()
 
 # RFQs
 RFQ1 = uid()
@@ -134,7 +135,7 @@ FAR_FUTURE = (NOW + timedelta(days=365)).isoformat()
 
 users = [
     # id, mobile, email, role, entity_type, entity_id
-    (U_ADMIN,   "9000000001", "admin@amaralum.com",     "super_admin",       None,         None),
+    (U_ADMIN,   "9000000001", "admin@amaralum.com",     "super_admin",       'admin',      None),
     (U_VENDOR1, "9000000002", "admin@krishnachem.com",  "vendor_admin",      "vendor",     V1),
     (U_VENDOR2, "9000000003", "admin@shivashakti.com",  "vendor_admin",      "vendor",     V2),
     (U_TRANS1,  "9000000004", "admin@speedlogistics.com","transporter_admin","transporter", T1),
@@ -443,8 +444,18 @@ if not conn.execute("SELECT id FROM rate_cards WHERE id=?", (RC1,)).fetchone():
          ts(-90), ts(90), "approved", U_ADMIN, ts(-85), ts(), ts())
     )
 
+if not conn.execute("SELECT id FROM rate_cards WHERE id=?", (RC2,)).fetchone():
+    conn.execute(
+        """INSERT INTO rate_cards(id,transporter_id,route_id,vehicle_type,
+           rate_per_km,rate_per_ton,minimum_charge,valid_from,valid_until,
+           status,is_deleted,created_at,updated_at)
+           VALUES(?,?,?,?,?,?,?,?,?,'pending',0,?,?)""",
+        (RC2, T2, R2, "32 ft SXL", 42.0, 950.0, 6000.0,
+         ts(-5), ts(180), ts(-5), ts())
+    )
+
 conn.commit()
-print("  Rate cards: 1 inserted")
+print("  Rate cards: 2 inserted")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -675,6 +686,32 @@ for uid_, title, body, event, channel in notifs:
 
 conn.commit()
 print(f"  Notifications: {len(notifs)} inserted")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 15. AUDIT LOGS (sample admin actions)
+# ─────────────────────────────────────────────────────────────────────────────
+
+import json as _json
+
+audit_entries = [
+    (uid(), U_ADMIN, 'vendor',      V1,   'approved', _json.dumps({"status": "submitted"}),  _json.dumps({"status": "approved"}),  ts(-30)),
+    (uid(), U_ADMIN, 'transporter', T1,   'approved', _json.dumps({"status": "submitted"}),  _json.dumps({"status": "approved"}),  ts(-45)),
+    (uid(), U_ADMIN, 'rfq',         RFQ2, 'awarded',  _json.dumps({"status": "published"}),  _json.dumps({"status": "awarded"}),   ts(-5)),
+    (uid(), U_ADMIN, 'invoice',     INV1, 'approved', _json.dumps({"status": "submitted"}),  _json.dumps({"status": "approved"}),  ts(-2)),
+]
+
+for aid, actor, etype, eid, action, before_, after_, created in audit_entries:
+    if not conn.execute("SELECT id FROM audit_logs WHERE id=?", (aid,)).fetchone():
+        conn.execute(
+            """INSERT INTO audit_logs(id,actor_user_id,entity_type,entity_id,
+               action,before_state,after_state,created_at)
+               VALUES(?,?,?,?,?,?,?,?)""",
+            (aid, actor, etype, eid, action, before_, after_, created)
+        )
+
+conn.commit()
+print(f"  Audit logs: {len(audit_entries)} inserted")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

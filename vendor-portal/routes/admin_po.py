@@ -144,3 +144,20 @@ def record_grn(po_id):
         return jsonify({'grn_number': grn_number, 'grn_id': grn_id})
     finally:
         conn.close()
+
+
+@bp.get('/api/admin/grns')
+@admin_required
+def list_admin_grns():
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT g.*, p.po_number, v.company_name as vendor_name
+            FROM grns g
+            JOIN purchase_orders p ON p.id = g.po_id
+            JOIN vendors v ON v.id = g.vendor_id
+            ORDER BY g.created_at DESC
+        """).fetchall()
+        return jsonify([dict(r) for r in rows])
+    finally:
+        conn.close()
