@@ -196,7 +196,10 @@
 
       <!-- ── INVOICES ── -->
       <div id="section-invoices" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Invoices</h1></div>
+        <div class="page-header">
+          <h1>Invoices</h1>
+          <button class="btn btn-primary" onclick="openSubmitTransporterInvoiceModal()">+ Submit Invoice</button>
+        </div>
         <div class="card">
           <div class="card-body" id="invoices-list">
             <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet</p></div>
@@ -209,14 +212,17 @@
         <div class="page-header"><h1>Payments</h1></div>
         <div class="card">
           <div class="card-body" id="payments-list">
-            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments recorded yet</p></div>
+            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments received yet</p></div>
           </div>
         </div>
       </div>
 
       <!-- ── PROFILE / DOCS / BANKING (placeholders for Phase 1) ── -->
       <div id="section-profile" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Company Profile</h1></div>
+        <div class="page-header">
+          <h1>Company Profile</h1>
+          <span id="profile-status-badge"></span>
+        </div>
         <div id="profile-content"><div class="empty-state"><div class="spinner"></div></div></div>
       </div>
       <div id="section-documents" class="portal-section" style="display:none">
@@ -247,6 +253,12 @@
 
 <script src="/static/js/common.js"></script>
 <script src="/static/js/transporter/registration.js"></script>
+<script src="/static/js/transporter/trips.js"></script>
+<script src="/static/js/transporter/rate_cards.js"></script>
+<script src="/static/js/transporter/fleet.js"></script>
+<script src="/static/js/transporter/invoices.js"></script>
+<script src="/static/js/transporter/documents.js"></script>
+<script src="/static/js/transporter/profile.js"></script>
 <script src="/static/js/transporter/dashboard.js"></script>
 </body>
 </html>

@@ -276,7 +276,7 @@ def audit(actor_id: str, entity_type: str, entity_id: str, action: str,
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc)
 
 
 def new_id() -> str:

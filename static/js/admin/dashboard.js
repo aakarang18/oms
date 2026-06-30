@@ -76,12 +76,30 @@ document.addEventListener('DOMContentLoaded', () => {
         setActiveNav('section-vendor-reg');
         _regCurrentTab = 'transporters';
         initAdminRegistrations();
+      } else if (sec === 'section-rfqs') {
+        initAdminRFQs();
+      } else if (sec === 'section-pos') {
+        initAdminPOs();
       } else if (sec === 'section-compliance') {
         initComplianceView();
       } else if (sec === 'section-audit') {
         initAuditLog();
       } else if (sec === 'section-users') {
         initUserManagement();
+      } else if (sec === 'section-routes') {
+        initAdminRoutes();
+      } else if (sec === 'section-rate-approval') {
+        initAdminRateApprovals();
+      } else if (sec === 'section-trips') {
+        initAdminTrips();
+      } else if (sec === 'section-quotes') {
+        initQuoteComparison();
+      } else if (sec === 'section-grns') {
+        initAdminGRNs();
+      } else if (sec === 'section-invoices') {
+        initAdminInvoices();
+      } else if (sec === 'section-payments') {
+        initAdminPayments();
       }
     });
   });

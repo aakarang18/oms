@@ -100,7 +100,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
     btn.addEventListener('click', () => {
       const section = btn.dataset.section;
-      if (section === 'section-dashboard') loadVendorDashboard();
+      if (section === 'section-dashboard')  loadVendorDashboard();
+      else if (section === 'section-rfqs')      loadVendorRFQs();
+      else if (section === 'section-quotes')    loadVendorQuotes();
+      else if (section === 'section-pos')       loadVendorPOs();
+      else if (section === 'section-invoices')   loadVendorInvoices();
+      else if (section === 'section-payments')   loadVendorPayments();
+      else if (section === 'section-documents')  loadVendorDocuments();
+      else if (section === 'section-profile')    loadVendorProfile();
+      else if (section === 'section-banking')    loadVendorBanking();
     });
   });
 });

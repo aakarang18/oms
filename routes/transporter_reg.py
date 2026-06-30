@@ -530,3 +530,36 @@ def list_vehicles():
         return jsonify(result)
     finally:
         conn.close()
+
+
+# ── Transporter Documents list ────────────────────────────────────────────────
+
+@bp.get("/api/transporter/documents")
+@transporter_required
+def transporter_documents():
+    tid = g.user["entity_id"]
+    conn = get_db()
+    try:
+        docs = conn.execute(
+            """SELECT id, doc_type, file_name, file_size_bytes,
+                      expiry_date, expiry_status, uploaded_at
+               FROM transporter_documents WHERE transporter_id=? AND is_deleted=0
+               ORDER BY uploaded_at DESC""",
+            (tid,)
+        ).fetchall()
+        vehicle_rows = conn.execute(
+            """SELECT vhd.id, vhd.doc_type, vhd.file_name, vhd.file_size_bytes,
+                      vhd.expiry_date, vhd.expiry_status, vhd.uploaded_at,
+                      vh.reg_number
+               FROM vehicle_documents vhd
+               JOIN vehicles vh ON vh.id = vhd.vehicle_id
+               WHERE vh.transporter_id=? AND vhd.is_deleted=0
+               ORDER BY vh.reg_number, vhd.uploaded_at DESC""",
+            (tid,)
+        ).fetchall()
+        return jsonify({
+            "company_docs": [dict(r) for r in docs],
+            "vehicle_docs": [dict(r) for r in vehicle_rows],
+        })
+    finally:
+        conn.close()

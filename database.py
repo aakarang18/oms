@@ -420,6 +420,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     invoice_pdf_path    TEXT NOT NULL,
     gstin               TEXT,
     hsn_codes           TEXT,
+    line_items_json     TEXT,
     taxable_amount      REAL NOT NULL,
     cgst_amount         REAL DEFAULT 0,
     sgst_amount         REAL DEFAULT 0,

@@ -3,11 +3,12 @@
 
 'use strict';
 
+const TAB_DEFAULT_STATUS = { vendors: 'under_review', transporters: 'pending' };
 let _regCurrentTab = 'vendors';
-let _regCurrentStatus = 'submitted';
+let _regCurrentStatus = TAB_DEFAULT_STATUS['vendors'];
 let _regList = [];
 
-const STATUS_FILTERS = ['submitted', 'under_review', 'approved', 'rejected', 'info_requested', 'draft'];
+const STATUS_FILTERS = ['under_review', 'submitted', 'info_requested', 'approved', 'rejected', 'draft', 'pending'];
 
 function initAdminRegistrations() {
   renderRegToolbar();
@@ -32,6 +33,7 @@ function renderRegToolbar() {
 
 async function switchRegTab(tab) {
   _regCurrentTab = tab;
+  _regCurrentStatus = TAB_DEFAULT_STATUS[tab] || 'under_review';
   renderRegToolbar();
   await loadRegistrationList();
 }
@@ -67,10 +69,10 @@ function renderRegList(items) {
   el.innerHTML = items.map(item => `
     <tr>
       <td><strong>${escHtml(item.company_name || '')}</strong><br><small style="color:var(--gray-500);">${escHtml(item.gstin || '')}</small></td>
-      <td>${escHtml(item.contact_person || '')}<br><small>${escHtml(item.contact_email || '')}</small></td>
-      <td>${escHtml(item.city || '')}${item.state ? `, ${escHtml(item.state)}` : ''}</td>
-      <td><span class="badge badge-${item.status}">${item.status.replace('_', ' ')}</span></td>
-      <td>${item.submitted_at ? fmtDate(item.submitted_at) : relTime(item.created_at)}</td>
+      <td>${escHtml(item.contact_name || '')}<br><small>${escHtml(item.contact_email || '')}</small></td>
+      <td>${escHtml(item.reg_addr_city || '')}${item.reg_addr_state ? `, ${escHtml(item.reg_addr_state)}` : ''}</td>
+      <td><span class="badge badge-${item.status}">${item.status.replace(/_/g, ' ')}</span></td>
+      <td>${relTime(item.updated_at || item.created_at)}</td>
       <td>
         <button class="btn btn-outline btn-sm" onclick="openRegDetail('${item.id}')">Review</button>
       </td>
@@ -94,17 +96,18 @@ async function openRegDetail(entityId) {
 
 function renderRegDetailModal(data) {
   const isVendor = _regCurrentTab === 'vendors';
-  const entity = isVendor ? data.vendor : data.transporter;
+  // API returns a flat object (not nested under data.vendor/data.transporter)
+  const entity = data;
   const docs = data.documents || [];
   const canAct = ['submitted', 'under_review', 'info_requested'].includes(entity.status);
 
   const docRows = docs.length
-    ? docs.filter(d => !d.is_deleted).map(d => `
+    ? docs.map(d => `
         <tr>
-          <td>${escHtml(d.doc_type.replace(/_/g, ' '))}</td>
+          <td>${escHtml((d.doc_type || '').replace(/_/g, ' '))}</td>
           <td>${d.expiry_date ? fmtDate(d.expiry_date) : '—'}</td>
-          <td><span class="badge badge-${d.expiry_status || 'valid'}">${d.expiry_status || 'valid'}</span></td>
-          <td><a href="/uploads/${escHtml(d.file_path)}" target="_blank" class="btn btn-ghost btn-sm">View</a></td>
+          <td><span class="badge badge-${d.expiry_status || 'ok'}">${d.expiry_status || 'ok'}</span></td>
+          <td>${d.file_path ? `<a href="/${escHtml(d.file_path)}" target="_blank" class="btn btn-ghost btn-sm">View</a>` : '—'}</td>
         </tr>`).join('')
     : '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);">No documents uploaded</td></tr>';
 
@@ -112,26 +115,28 @@ function renderRegDetailModal(data) {
     <div class="detail-section">
       <h4>Categories & Products</h4>
       ${(data.categories || []).length
-        ? `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">${(data.categories || []).map(c => `<span class="badge badge-info">${escHtml(c.category_name)}</span>`).join('')}</div>`
+        ? `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">${(data.categories || []).map(c => `<span class="badge badge-info">${escHtml(c)}</span>`).join('')}</div>`
         : '<p style="color:var(--gray-500);">No categories</p>'}
       ${(data.products || []).length
-        ? `<table class="data-table" style="margin-top:0.5rem;"><thead><tr><th>Name</th><th>Code</th><th>UOM</th><th>HSN</th></tr></thead><tbody>${(data.products || []).map(p => `<tr><td>${escHtml(p.product_name)}</td><td>${escHtml(p.product_code || '—')}</td><td>${escHtml(p.uom || '—')}</td><td>${escHtml(p.hsn_code || '—')}</td></tr>`).join('')}</tbody></table>`
+        ? `<table class="data-table" style="margin-top:0.5rem;"><thead><tr><th>Product Name</th><th>Description</th></tr></thead><tbody>${(data.products || []).map(p => `<tr><td>${escHtml(p.product_name)}</td><td>${escHtml(p.description || '—')}</td></tr>`).join('')}</tbody></table>`
         : ''}
     </div>` : '';
 
   const transporterExtra = !isVendor ? `
     <div class="detail-section">
       <h4>Fleet Details</h4>
-      <p>Fleet size: <strong>${entity.fleet_size || 'Not specified'}</strong></p>
       ${(data.vehicles || []).length
-        ? `<table class="data-table"><thead><tr><th>Vehicle No</th><th>Type</th><th>Capacity</th><th>Status</th></tr></thead><tbody>${(data.vehicles || []).map(v => `<tr><td>${escHtml(v.vehicle_no)}</td><td>${escHtml(v.vehicle_type)}</td><td>${v.capacity_tonnes ? `${v.capacity_tonnes}T` : '—'}</td><td><span class="badge badge-${v.status}">${v.status}</span></td></tr>`).join('')}</tbody></table>`
+        ? `<table class="data-table"><thead><tr><th>Reg Number</th><th>Type</th><th>Capacity</th><th>Status</th></tr></thead><tbody>${(data.vehicles || []).map(v => `<tr><td>${escHtml(v.reg_number)}</td><td>${escHtml(v.vehicle_type)}</td><td>${v.capacity_tons ? `${v.capacity_tons}T` : '—'}</td><td><span class="badge badge-${v.status}">${v.status}</span></td></tr>`).join('')}</tbody></table>`
         : '<p style="color:var(--gray-500);">No vehicles registered</p>'}
     </div>` : '';
+
+  const address = [entity.reg_addr_line1, entity.reg_addr_line2, entity.reg_addr_city,
+                   entity.reg_addr_state, entity.reg_addr_pin].filter(Boolean).join(', ');
 
   const html = `
     <div class="modal-header">
       <h3>${escHtml(entity.company_name)}</h3>
-      <span class="badge badge-${entity.status}" style="margin-left:1rem;">${entity.status.replace('_', ' ')}</span>
+      <span class="badge badge-${entity.status}" style="margin-left:1rem;">${entity.status.replace(/_/g, ' ')}</span>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
       <div class="detail-grid">
@@ -139,22 +144,23 @@ function renderRegDetailModal(data) {
           <h4>Company Info</h4>
           <dl class="detail-list">
             <dt>GSTIN</dt><dd>${escHtml(entity.gstin || '—')}</dd>
-            <dt>PAN</dt><dd>${escHtml(entity.pan || '—')}</dd>
-            ${isVendor ? `<dt>Type</dt><dd>${escHtml(entity.vendor_type || '—')}</dd>` : `<dt>License No.</dt><dd>${escHtml(entity.transport_license_no || '—')}</dd>`}
-            <dt>Contact</dt><dd>${escHtml(entity.contact_person || '—')}</dd>
+            <dt>PAN</dt><dd>${escHtml(entity.pan_number || '—')}</dd>
+            <dt>Type</dt><dd>${escHtml(entity.company_type || '—')}</dd>
+            <dt>Contact</dt><dd>${escHtml(entity.contact_name || '—')}</dd>
+            <dt>Designation</dt><dd>${escHtml(entity.contact_designation || '—')}</dd>
             <dt>Email</dt><dd>${escHtml(entity.contact_email || '—')}</dd>
             <dt>Mobile</dt><dd>${escHtml(entity.contact_mobile || '—')}</dd>
-            <dt>Address</dt><dd>${escHtml([entity.registered_address, entity.city, entity.state, entity.pin_code].filter(Boolean).join(', '))}</dd>
+            <dt>Address</dt><dd>${escHtml(address || '—')}</dd>
           </dl>
         </div>
         <div class="detail-section">
           <h4>Banking</h4>
           <dl class="detail-list">
-            <dt>Account Name</dt><dd>${escHtml(entity.bank_account_name || '—')}</dd>
-            <dt>Account No.</dt><dd>${escHtml(entity.bank_account_no || '—')}</dd>
+            <dt>Account Holder</dt><dd>${escHtml(entity.bank_account_holder || '—')}</dd>
+            <dt>Account No.</dt><dd>${escHtml(entity.bank_account_number || '—')}</dd>
             <dt>IFSC</dt><dd>${escHtml(entity.bank_ifsc || '—')}</dd>
             <dt>Bank</dt><dd>${escHtml(entity.bank_name || '—')}</dd>
-            <dt>Branch</dt><dd>${escHtml(entity.bank_branch || '—')}</dd>
+            <dt>Account Type</dt><dd>${escHtml(entity.bank_account_type || '—')}</dd>
           </dl>
         </div>
       </div>
@@ -167,7 +173,7 @@ function renderRegDetailModal(data) {
           <tbody>${docRows}</tbody>
         </table>
       </div>
-      ${entity.admin_note ? `<div class="alert alert-info"><strong>Previous Note:</strong> ${escHtml(entity.admin_note)}</div>` : ''}
+      ${entity.info_request_note ? `<div class="alert alert-info"><strong>Info Requested:</strong> ${escHtml(entity.info_request_note)}</div>` : ''}
       ${entity.rejection_reason ? `<div class="alert alert-danger"><strong>Rejection Reason:</strong> ${escHtml(entity.rejection_reason)}</div>` : ''}
     </div>
     <div class="modal-footer" style="gap:0.75rem;flex-wrap:wrap;">
@@ -278,50 +284,6 @@ async function submitInfoRequest(entityId) {
 
 function cancelRegAction(entityId) {
   openRegDetail(entityId);
-}
-
-// Compliance tab
-async function initComplianceView() {
-  const el = document.getElementById('compliance-status-filter');
-  if (el) el.addEventListener('change', loadComplianceData);
-  await loadComplianceData();
-}
-
-async function loadComplianceData() {
-  const statusEl = document.getElementById('compliance-status-filter');
-  const status = statusEl ? statusEl.value : 'expired';
-  const el = document.getElementById('compliance-list-body');
-  if (!el) return;
-  el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--gray-500);">Loading...</td></tr>';
-  try {
-    const res = await api('GET', `/api/admin/compliance?status=${status}`);
-    renderComplianceList(res);
-  } catch (e) {
-    el.innerHTML = `<tr><td colspan="6" class="text-danger" style="text-align:center;">${escHtml(e.message)}</td></tr>`;
-  }
-}
-
-function renderComplianceList(data) {
-  const el = document.getElementById('compliance-list-body');
-  if (!el) return;
-  const allDocs = [
-    ...(data.vendor_docs || []).map(d => ({ ...d, _entity: 'Vendor' })),
-    ...(data.transporter_docs || []).map(d => ({ ...d, _entity: 'Transporter' })),
-    ...(data.vehicle_docs || []).map(d => ({ ...d, _entity: 'Vehicle' }))
-  ];
-  if (!allDocs.length) {
-    el.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">No documents found</td></tr>';
-    return;
-  }
-  el.innerHTML = allDocs.map(d => `
-    <tr>
-      <td><span class="badge badge-info">${d._entity}</span></td>
-      <td>${escHtml(d.entity_name || '—')}</td>
-      <td>${escHtml(d.doc_type.replace(/_/g, ' '))}</td>
-      <td>${d.expiry_date ? fmtDate(d.expiry_date) : '—'}</td>
-      <td><span class="badge badge-${d.expiry_status}">${d.expiry_status}</span></td>
-      <td><a href="/uploads/${escHtml(d.file_path)}" target="_blank" class="btn btn-ghost btn-sm">View</a></td>
-    </tr>`).join('');
 }
 
 // Audit log

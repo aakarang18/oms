@@ -194,7 +194,10 @@
 
       <!-- ── INVOICES ── -->
       <div id="section-invoices" class="portal-section" style="display:none">
-        <div class="page-header"><h1>Invoices</h1></div>
+        <div class="page-header">
+          <h1>Invoices</h1>
+          <button class="btn btn-primary" onclick="openSubmitInvoiceModal()">+ Submit Invoice</button>
+        </div>
         <div class="card">
           <div class="card-body" id="invoices-list">
             <div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices submitted yet</p></div>
@@ -207,7 +210,7 @@
         <div class="page-header"><h1>Payments</h1></div>
         <div class="card">
           <div class="card-body" id="payments-list">
-            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments recorded yet</p></div>
+            <div class="empty-state"><div class="empty-icon">💳</div><p>No payments received yet</p></div>
           </div>
         </div>
       </div>
@@ -258,6 +261,11 @@
 
 <script src="/static/js/common.js"></script>
 <script src="/static/js/vendor/registration.js"></script>
+<script src="/static/js/vendor/rfq.js"></script>
+<script src="/static/js/vendor/po.js"></script>
+<script src="/static/js/vendor/invoices.js"></script>
+<script src="/static/js/vendor/documents.js"></script>
+<script src="/static/js/vendor/profile.js"></script>
 <script src="/static/js/vendor/dashboard.js"></script>
 </body>
 </html>

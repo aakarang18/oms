@@ -76,4 +76,19 @@ function renderTransporterActivity(items) {
 
 document.addEventListener('DOMContentLoaded', () => {
   initTransporterPortal();
+
+  document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sec = btn.dataset.section;
+      if (sec === 'section-dashboard')    loadTransporterDashboard();
+      else if (sec === 'section-trips')        loadTransporterTrips();
+      else if (sec === 'section-rate-cards')   loadRateCards();
+      else if (sec === 'section-fleet')        loadFleet();
+      else if (sec === 'section-invoices')     loadTransporterInvoices();
+      else if (sec === 'section-payments')     loadTransporterPayments();
+      else if (sec === 'section-documents')    loadTransporterDocuments();
+      else if (sec === 'section-profile')      loadTransporterProfile();
+      else if (sec === 'section-banking')      loadTransporterBanking();
+    });
+  });
 });

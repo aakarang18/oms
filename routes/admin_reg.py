@@ -63,7 +63,7 @@ def vendor_detail(vid):
             "SELECT product_name, description FROM vendor_products WHERE vendor_id=?", (vid,)
         ).fetchall()
         docs = conn.execute(
-            """SELECT id, doc_type, file_name, file_size_bytes, is_mandatory,
+            """SELECT id, doc_type, file_path, file_name, file_size_bytes, is_mandatory,
                       expiry_date, expiry_status, uploaded_at
                FROM vendor_documents WHERE vendor_id=? AND is_deleted=0""",
             (vid,)
@@ -256,7 +256,7 @@ def transporter_detail(tid):
             return jsonify({"error": "Not found"}), 404
 
         docs = conn.execute(
-            """SELECT id, doc_type, file_name, is_mandatory, expiry_date, expiry_status, uploaded_at
+            """SELECT id, doc_type, file_path, file_name, is_mandatory, expiry_date, expiry_status, uploaded_at
                FROM transporter_documents WHERE transporter_id=? AND is_deleted=0""",
             (tid,)
         ).fetchall()
@@ -399,50 +399,6 @@ def request_transporter_info(tid):
                        "info_requested", now)
 
         return jsonify({"message": "Information request sent"})
-    finally:
-        conn.close()
-
-
-# ── Compliance dashboard ───────────────────────────────────────────────────────
-
-@bp.get("/api/admin/compliance")
-@admin_required
-def compliance_dashboard():
-    status_filter = request.args.get("status", "expired")
-    conn = get_db()
-    try:
-        vendor_docs = conn.execute("""
-            SELECT vd.id, vd.doc_type, vd.file_name, vd.expiry_date, vd.expiry_status,
-                   v.company_name, v.id as entity_id, 'vendor' as entity_type
-            FROM vendor_documents vd JOIN vendors v ON vd.vendor_id=v.id
-            WHERE vd.expiry_status=? AND vd.is_deleted=0
-            ORDER BY vd.expiry_date
-        """, (status_filter,)).fetchall()
-
-        trans_docs = conn.execute("""
-            SELECT td.id, td.doc_type, td.file_name, td.expiry_date, td.expiry_status,
-                   t.company_name, t.id as entity_id, 'transporter' as entity_type
-            FROM transporter_documents td JOIN transporters t ON td.transporter_id=t.id
-            WHERE td.expiry_status=? AND td.is_deleted=0
-            ORDER BY td.expiry_date
-        """, (status_filter,)).fetchall()
-
-        veh_docs = conn.execute("""
-            SELECT vd.id, vd.doc_type, vd.file_name, vd.expiry_date, vd.expiry_status,
-                   v.reg_number as company_name, t.company_name as transporter_name,
-                   v.id as entity_id, 'vehicle' as entity_type
-            FROM vehicle_documents vd
-            JOIN vehicles v ON vd.vehicle_id=v.id
-            JOIN transporters t ON v.transporter_id=t.id
-            WHERE vd.expiry_status=? AND vd.is_deleted=0
-            ORDER BY vd.expiry_date
-        """, (status_filter,)).fetchall()
-
-        return jsonify({
-            "vendor_documents":       [dict(r) for r in vendor_docs],
-            "transporter_documents":  [dict(r) for r in trans_docs],
-            "vehicle_documents":      [dict(r) for r in veh_docs],
-        })
     finally:
         conn.close()
 
