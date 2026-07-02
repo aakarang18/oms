@@ -106,8 +106,9 @@ Q2 = uid()
 Q3 = uid()
 
 # POs
-PO1 = uid()
-PO2 = uid()
+PO1  = uid()
+PO2  = uid()
+GRN1 = uid()
 
 # Trips
 TR1 = uid()
@@ -541,7 +542,7 @@ print(f"  Quotes: {len(quotes_data)} inserted")
 
 pos_data = [
     # id, po_number, rfq_id, quote_id, vendor_id, status
-    (PO1, seq("PO", 1), RFQ2, Q3, V1, "acknowledged",  "Caustic Soda Flakes",  200.0, "MT", 8800.0, 18.0),
+    (PO1, seq("PO", 1), RFQ2, Q3, V1, "grn_received",  "Caustic Soda Flakes",  200.0, "MT", 8800.0, 18.0),
     (PO2, seq("PO", 2), RFQ1, Q1, V1, "generated",     "Aluminium Sulphate",   500.0, "MT", 9200.0, 18.0),
 ]
 
@@ -565,6 +566,23 @@ for p in pos_data:
 
 conn.commit()
 print(f"  Purchase Orders: {len(pos_data)} inserted")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 10b. GRN  (goods receipt for PO1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+if not conn.execute("SELECT id FROM grns WHERE id=?", (GRN1,)).fetchone():
+    conn.execute(
+        """INSERT INTO grns(id,grn_number,po_id,vendor_id,qty_ordered,qty_received,
+           quality_status,rejection_reason,received_by,received_at,created_at,updated_at)
+           VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (GRN1, seq("GRN", 1), PO1, V1, 200.0, 195.0,
+         "partial", "5 MT damaged in transit",
+         U_ADMIN, ts(-3), ts(-3), ts(-3))
+    )
+    conn.commit()
+print("  GRNs: 1 inserted")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
