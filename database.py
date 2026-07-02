@@ -1,7 +1,9 @@
 import sqlite3
 import os
 
-DB_PATH = os.environ.get("PORTAL_DB", "portal.db")
+DB_PATH = os.environ.get("PORTAL_DB") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "portal.db"
+)
 
 
 def get_db():

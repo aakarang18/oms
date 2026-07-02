@@ -19,7 +19,9 @@ import sqlite3
 import os
 from datetime import datetime, timedelta, timezone
 
-DB_PATH = os.environ.get("PORTAL_DB", "portal.db")
+DB_PATH = os.environ.get("PORTAL_DB") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "portal.db"
+)
 
 WIPE = "--wipe" in sys.argv
 
