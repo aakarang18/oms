@@ -516,6 +516,11 @@ CREATE INDEX IF NOT EXISTS idx_vedocs_expiry        ON vehicle_documents(expiry_
     conn.close()
 
 
+if __name__ == '__main__':
+    init_db()
+    print(f"Database initialised at {DB_PATH}")
+
+
 def next_sequence(prefix: str) -> str:
     """Generate auto-incremented number like RFQ-2026-001."""
     from datetime import datetime
