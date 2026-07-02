@@ -157,6 +157,18 @@ for u in users:
 conn.commit()
 print(f"  Users: {len(users)} inserted / already present")
 
+# Re-resolve IDs from DB so downstream FK refs use the actual stored UUIDs
+# (generated IDs above may differ from what's already in an existing db)
+def _uid_for_mobile(mobile):
+    row = conn.execute("SELECT id FROM users WHERE mobile=?", (mobile,)).fetchone()
+    return row["id"] if row else None
+
+U_ADMIN   = _uid_for_mobile("9000000001") or U_ADMIN
+U_VENDOR1 = _uid_for_mobile("9000000002") or U_VENDOR1
+U_VENDOR2 = _uid_for_mobile("9000000003") or U_VENDOR2
+U_TRANS1  = _uid_for_mobile("9000000004") or U_TRANS1
+U_TRANS2  = _uid_for_mobile("9000000005") or U_TRANS2
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. SESSIONS (fixed tokens for easy login)
@@ -217,7 +229,7 @@ vendors = [
 ]
 
 for v in vendors:
-    existing = conn.execute("SELECT id FROM vendors WHERE id=?", (v["id"],)).fetchone()
+    existing = conn.execute("SELECT id FROM vendors WHERE gstin=?", (v["gstin"],)).fetchone()
     if not existing:
         conn.execute(
             """INSERT INTO vendors(id,company_name,gstin,pan_number,company_type,
@@ -238,6 +250,14 @@ for v in vendors:
                 ts(), ts(),
             )
         )
+
+# Re-resolve vendor IDs now so sub-table inserts below use the correct FK
+def _uid_for_gstin_v(gstin):
+    row = conn.execute("SELECT id FROM vendors WHERE gstin=?", (gstin,)).fetchone()
+    return row["id"] if row else None
+
+V1 = _uid_for_gstin_v("27AAACK1234A1Z5") or V1
+V2 = _uid_for_gstin_v("29AAASS5678B1Z3") or V2
 
 # Vendor categories
 for vid, cats in [(V1, ["Chemicals", "Raw Materials"]), (V2, ["Chemicals"])]:
@@ -314,7 +334,7 @@ transporters = [
 ]
 
 for t in transporters:
-    existing = conn.execute("SELECT id FROM transporters WHERE id=?", (t["id"],)).fetchone()
+    existing = conn.execute("SELECT id FROM transporters WHERE gstin=?", (t["gstin"],)).fetchone()
     if not existing:
         conn.execute(
             """INSERT INTO transporters(id,company_name,gstin,pan_number,company_type,
@@ -335,6 +355,14 @@ for t in transporters:
                 ts(), ts(),
             )
         )
+
+# Re-resolve transporter IDs now so sub-table inserts below use the correct FK
+def _uid_for_gstin_t(gstin):
+    row = conn.execute("SELECT id FROM transporters WHERE gstin=?", (gstin,)).fetchone()
+    return row["id"] if row else None
+
+T1 = _uid_for_gstin_t("27AABCS1234C1Z4") or T1
+T2 = _uid_for_gstin_t("24AABCB5678D1Z2") or T2
 
 # Transporter documents
 for tid, docs in [
@@ -372,7 +400,7 @@ vehicles_data = [
 
 for v in vehicles_data:
     vid, tid, reg, vtype, cap, yr, status, driver, dlno, dlexp = v
-    if not conn.execute("SELECT id FROM vehicles WHERE id=?", (vid,)).fetchone():
+    if not conn.execute("SELECT id FROM vehicles WHERE reg_number=?", (reg,)).fetchone():
         conn.execute(
             """INSERT INTO vehicles(id,transporter_id,reg_number,vehicle_type,capacity_tons,
                year_of_manufacture,status,driver_name,driver_license_number,driver_license_expiry,
@@ -380,6 +408,14 @@ for v in vehicles_data:
                VALUES(?,?,?,?,?,?,?,?,?,?,0,?,?)""",
             (vid, tid, reg, vtype, cap, yr, status, driver, dlno, dlexp, ts(), ts())
         )
+
+# Re-resolve vehicle IDs from DB
+def _uid_for_reg(reg):
+    row = conn.execute("SELECT id FROM vehicles WHERE reg_number=?", (reg,)).fetchone()
+    return row["id"] if row else None
+
+VH1 = _uid_for_reg("MH04AA1234") or VH1
+VH2 = _uid_for_reg("MH04BB5678") or VH2
 
 # Vehicle documents
 for vid, docs in [
@@ -419,7 +455,7 @@ routes_data = [
 
 for r in routes_data:
     rid, code, oc, os_, dc, ds, dist = r
-    if not conn.execute("SELECT id FROM routes WHERE id=?", (rid,)).fetchone():
+    if not conn.execute("SELECT id FROM routes WHERE route_code=?", (code,)).fetchone():
         conn.execute(
             """INSERT INTO routes(id,route_code,origin_city,origin_state,destination_city,
                destination_state,distance_km,route_type,is_active,created_by,created_at,updated_at)
@@ -429,6 +465,14 @@ for r in routes_data:
 
 conn.commit()
 print(f"  Routes: {len(routes_data)} inserted")
+
+# Re-resolve route IDs from DB
+def _uid_for_route(code):
+    row = conn.execute("SELECT id FROM routes WHERE route_code=?", (code,)).fetchone()
+    return row["id"] if row else None
+
+R1 = _uid_for_route("RT-MUM-AHM") or R1
+R2 = _uid_for_route("RT-MUM-HYD") or R2
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -485,7 +529,7 @@ rfqs_data = [
 
 for r in rfqs_data:
     rid, rnum, title, qty, unit, loc, ddl, sdl, status, cat = r
-    if not conn.execute("SELECT id FROM rfqs WHERE id=?", (rid,)).fetchone():
+    if not conn.execute("SELECT id FROM rfqs WHERE rfq_number=?", (rnum,)).fetchone():
         conn.execute(
             """INSERT INTO rfqs(id,rfq_number,title,description,quantity,quantity_unit,
                delivery_location,delivery_deadline,submission_deadline,target_type,
@@ -503,6 +547,15 @@ for r in rfqs_data:
 
 conn.commit()
 print(f"  RFQs: {len(rfqs_data)} inserted")
+
+# Re-resolve RFQ IDs from DB
+def _uid_for_rfq(num):
+    row = conn.execute("SELECT id FROM rfqs WHERE rfq_number=?", (num,)).fetchone()
+    return row["id"] if row else None
+
+RFQ1 = _uid_for_rfq(seq("RFQ", 1)) or RFQ1
+RFQ2 = _uid_for_rfq(seq("RFQ", 2)) or RFQ2
+RFQ3 = _uid_for_rfq(seq("RFQ", 3)) or RFQ3
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -548,7 +601,7 @@ pos_data = [
 
 for p in pos_data:
     pid, pnum, rfq_id, quote_id, vendor_id, status, item, qty, unit, unit_price, gst_rate = p
-    if not conn.execute("SELECT id FROM purchase_orders WHERE id=?", (pid,)).fetchone():
+    if not conn.execute("SELECT id FROM purchase_orders WHERE po_number=?", (pnum,)).fetchone():
         taxable = unit_price * qty
         gst_amt = round(taxable * gst_rate / 100, 2)
         grand   = taxable + gst_amt
@@ -567,12 +620,20 @@ for p in pos_data:
 conn.commit()
 print(f"  Purchase Orders: {len(pos_data)} inserted")
 
+# Re-resolve PO IDs from DB
+def _uid_for_po(num):
+    row = conn.execute("SELECT id FROM purchase_orders WHERE po_number=?", (num,)).fetchone()
+    return row["id"] if row else None
+
+PO1 = _uid_for_po(seq("PO", 1)) or PO1
+PO2 = _uid_for_po(seq("PO", 2)) or PO2
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 10b. GRN  (goods receipt for PO1)
 # ─────────────────────────────────────────────────────────────────────────────
 
-if not conn.execute("SELECT id FROM grns WHERE id=?", (GRN1,)).fetchone():
+if not conn.execute("SELECT id FROM grns WHERE grn_number=?", (seq("GRN", 1),)).fetchone():
     conn.execute(
         """INSERT INTO grns(id,grn_number,po_id,vendor_id,qty_ordered,qty_received,
            quality_status,rejection_reason,received_by,received_at,created_at,updated_at)
@@ -583,6 +644,10 @@ if not conn.execute("SELECT id FROM grns WHERE id=?", (GRN1,)).fetchone():
     )
     conn.commit()
 print("  GRNs: 1 inserted")
+
+# Re-resolve GRN ID from DB
+_grn_row = conn.execute("SELECT id FROM grns WHERE grn_number=?", (seq("GRN", 1),)).fetchone()
+GRN1 = _grn_row["id"] if _grn_row else GRN1
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -598,7 +663,7 @@ trips_data = [
 
 for t in trips_data:
     tid, tnum, status, trans_id, veh_id, cargo, weight = t
-    if not conn.execute("SELECT id FROM trips WHERE id=?", (tid,)).fetchone():
+    if not conn.execute("SELECT id FROM trips WHERE trip_number=?", (tnum,)).fetchone():
         now_iso = ts()
         conn.execute(
             """INSERT INTO trips(id,trip_number,route_id,transporter_id,vehicle_id,
@@ -620,6 +685,15 @@ for t in trips_data:
 
 conn.commit()
 print(f"  Trips: {len(trips_data)} inserted")
+
+# Re-resolve trip IDs from DB
+def _uid_for_trip(num):
+    row = conn.execute("SELECT id FROM trips WHERE trip_number=?", (num,)).fetchone()
+    return row["id"] if row else None
+
+TR1 = _uid_for_trip(seq("TRIP", 1)) or TR1
+TR2 = _uid_for_trip(seq("TRIP", 2)) or TR2
+TR3 = _uid_for_trip(seq("TRIP", 3)) or TR3
 
 
 # ─────────────────────────────────────────────────────────────────────────────
