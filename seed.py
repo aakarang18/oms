@@ -750,11 +750,26 @@ if not conn.execute("SELECT id FROM payments WHERE invoice_id=?", (INV1,)).fetch
          "UTR2026062500001", "NEFT", U_ADMIN,
          f"Full payment against PO-{Y}-001", ts())
     )
-    conn.commit()
-    print("  Payments: 1 inserted")
 
-# Update invoice to paid
+# Payment for transporter invoice INV3 (Speed Logistics freight charges)
+pay_id2 = uid()
+if not conn.execute("SELECT id FROM payments WHERE invoice_id=?", (INV3,)).fetchone():
+    conn.execute(
+        """INSERT INTO payments(id,invoice_id,payment_amount,payment_date,
+           utr_number,payment_mode,recorded_by,notes,created_at)
+           VALUES(?,?,?,?,?,?,?,?,?)""",
+        (pay_id2, INV3, 22066.0, ts(-2).split("T")[0],
+         "UTR2026062400002", "NEFT", U_ADMIN,
+         f"Freight payment for TRIP-{Y}-002", ts())
+    )
+
+conn.commit()
+print("  Payments: 2 inserted")
+
+# Update invoices to paid
+conn.execute("UPDATE invoices SET status='approved' WHERE id=?", (INV3,))
 conn.execute("UPDATE invoices SET status='paid' WHERE id=?", (INV1,))
+conn.execute("UPDATE invoices SET status='paid' WHERE id=?", (INV3,))
 conn.commit()
 
 
