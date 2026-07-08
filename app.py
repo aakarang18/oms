@@ -229,6 +229,30 @@ def admin_portal():
     return render_template("admin.html", user=g.user)
 
 
+@app.get("/dev-login/<token>")
+def dev_login(token):
+    """Development-only shortcut: set the session cookie and redirect to the
+    appropriate portal. Only works when FLASK_ENV=development."""
+    if os.environ.get("FLASK_ENV") != "development":
+        abort(404)
+    from auth import load_session
+    user = load_session(token)
+    if not user:
+        return "Invalid or expired session token", 400
+    role = user["role"]
+    if role in ("super_admin", "procurement_admin", "transport_admin", "finance_admin"):
+        dest = "/admin"
+    elif role in ("vendor_admin", "vendor_user"):
+        dest = "/vendor"
+    elif role in ("transporter_admin", "transporter_user"):
+        dest = "/transporter"
+    else:
+        dest = "/"
+    resp = make_response(redirect(dest))
+    resp.set_cookie("portal_session", token, httponly=True, samesite="Lax", max_age=86400)
+    return resp
+
+
 # ─── Vendor Registration (pre-auth flow) ─────────────────────────────────────
 
 @app.post("/api/register/vendor/init")
