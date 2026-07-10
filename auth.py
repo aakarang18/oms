@@ -1,6 +1,7 @@
 """
 OTP generation, session management, and RBAC helpers.
 """
+import os
 import uuid
 import random
 import bcrypt
@@ -32,6 +33,10 @@ ADMIN_ROLES = {"super_admin", "procurement_admin", "transport_admin", "finance_a
 # ─── OTP ──────────────────────────────────────────────────────────────────────
 
 def generate_otp() -> str:
+    # FIXED_OTP overrides random generation — for testing while DLT registration is pending
+    fixed = os.environ.get("FIXED_OTP", "").strip()
+    if fixed:
+        return fixed
     return f"{random.SystemRandom().randint(100000, 999999)}"
 
 
