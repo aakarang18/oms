@@ -54,6 +54,12 @@
       transition: background .2s, border-color .2s;
     }
     .portal-link:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); color: #fff; }
+    .portal-link.selected {
+      background: rgba(245,158,11,.18);
+      border-color: #f59e0b;
+      color: #fff;
+      box-shadow: 0 0 0 2px rgba(245,158,11,.35);
+    }
     .portal-link-icon { font-size: 1.4rem; }
     .portal-link-label { font-weight: 600; }
     .portal-link-desc  { font-size: .78rem; color: rgba(255,255,255,.45); margin-top: 1px; }
@@ -177,8 +183,8 @@
 
       <!-- LOGIN TAB -->
       <div id="tab-login" class="login-card-body">
-        <h2>Welcome back</h2>
-        <p>Enter your registered mobile number to receive an OTP.</p>
+        <h2 id="login-title">Welcome back</h2>
+        <p id="login-subtitle">Select a portal on the left, then enter your mobile number.</p>
 
         <div id="login-step-1">
           <div class="form-group">
@@ -274,12 +280,34 @@
 
 <script src="/static/js/common.js"></script>
 <script>
-let _regUserId = null;
-let _regStep   = 'mobile'; // 'mobile' | 'otp'
+let _regUserId    = null;
+let _regStep      = 'mobile'; // 'mobile' | 'otp'
+let _selectedPortal = null;   // 'vendor' | 'transporter' | 'admin'
+
+const PORTAL_META = {
+  vendor:      { label: 'Vendor Portal',      icon: '🏭', subtitle: 'Sign in with your registered vendor mobile number.' },
+  transporter: { label: 'Transporter Portal', icon: '🚛', subtitle: 'Sign in with your registered transporter mobile number.' },
+  admin:       { label: 'Admin Portal',        icon: '⚙️', subtitle: 'Internal team access — enter your registered mobile number.' },
+};
 
 function setPortal(type) {
-  document.querySelectorAll('.login-tab')[0].click();
-  document.getElementById('login-mobile')?.focus();
+  _selectedPortal = type;
+
+  // Highlight selected box
+  document.querySelectorAll('.portal-link').forEach(el => el.classList.remove('selected'));
+  const boxes = document.querySelectorAll('.portal-link');
+  const order = ['vendor', 'transporter', 'admin'];
+  boxes[order.indexOf(type)]?.classList.add('selected');
+
+  // Update login card heading
+  const meta = PORTAL_META[type];
+  document.getElementById('login-title').textContent    = meta.label;
+  document.getElementById('login-subtitle').textContent = meta.subtitle;
+
+  // Switch to Sign In tab and focus mobile field
+  switchLoginTab('login', document.querySelectorAll('.login-tab')[0]);
+  backToStep1();
+  document.getElementById('login-mobile').focus();
 }
 
 function switchLoginTab(tab, btn) {
@@ -294,6 +322,7 @@ function switchLoginTab(tab, btn) {
 async function requestLoginOtp(isResend = false) {
   const mobile = document.getElementById('login-mobile').value.trim();
   if (!validateMobile(mobile)) { Toast.error('Enter a valid 10-digit mobile number'); return; }
+  if (!_selectedPortal) { Toast.warning('Please select a portal — Vendor, Transporter, or Admin'); return; }
 
   Loading.show();
   try {
@@ -325,8 +354,13 @@ async function verifyLoginOtp() {
   Loading.show();
   try {
     const data = await api('POST', '/api/auth/verify-otp', { mobile, otp });
-    Toast.success('Login successful! Redirecting…');
-    setTimeout(() => { window.location.href = data.redirect; }, 800);
+    // Warn if logged-in portal doesn't match the box they clicked, but redirect anyway
+    if (_selectedPortal && data.portal && data.portal !== _selectedPortal) {
+      Toast.warning(`Your account belongs to the ${PORTAL_META[data.portal]?.label || data.portal}. Redirecting there…`);
+    } else {
+      Toast.success('Login successful! Redirecting…');
+    }
+    setTimeout(() => { window.location.href = data.redirect; }, 900);
   } catch(e) {
     Toast.error(e.message);
   } finally { Loading.hide(); }
