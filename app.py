@@ -112,8 +112,9 @@ def api_request_otp():
 @app.post("/api/auth/verify-otp")
 def api_verify_otp():
     data = request.get_json(silent=True) or {}
-    mobile = (data.get("mobile") or "").strip()
-    otp    = (data.get("otp") or "").strip()
+    mobile          = (data.get("mobile") or "").strip()
+    otp             = (data.get("otp") or "").strip()
+    selected_portal = (data.get("portal") or "").strip().lower()  # hint from UI
 
     if not mobile or not otp:
         return jsonify({"error": "Mobile and OTP are required"}), 400
@@ -137,10 +138,21 @@ def api_verify_otp():
         record_failed_attempt(user["id"])
         return jsonify({"error": err}), 401
 
+    # Portal enforcement — validate AFTER OTP so brute-force protection still applies
+    actual_portal = ROLE_PORTAL.get(user["role"], "vendor")
+    if selected_portal and selected_portal in ("vendor", "transporter", "admin") \
+            and selected_portal != actual_portal:
+        portal_errors = {
+            "vendor":      "This account is not registered as a vendor. Please use the correct portal.",
+            "transporter": "This account is not registered as a transporter. Please use the correct portal.",
+            "admin":       "This account does not have admin access.",
+        }
+        return jsonify({"error": portal_errors[selected_portal]}), 403
+
     clear_failed_attempts(user["id"])
     token = create_session(user["id"])
 
-    portal = ROLE_PORTAL.get(user["role"], "vendor")
+    portal = actual_portal
     redirect_url = f"/{portal}"
 
     resp = make_response(jsonify({

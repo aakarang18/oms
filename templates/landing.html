@@ -353,14 +353,9 @@ async function verifyLoginOtp() {
 
   Loading.show();
   try {
-    const data = await api('POST', '/api/auth/verify-otp', { mobile, otp });
-    // Warn if logged-in portal doesn't match the box they clicked, but redirect anyway
-    if (_selectedPortal && data.portal && data.portal !== _selectedPortal) {
-      Toast.warning(`Your account belongs to the ${PORTAL_META[data.portal]?.label || data.portal}. Redirecting there…`);
-    } else {
-      Toast.success('Login successful! Redirecting…');
-    }
-    setTimeout(() => { window.location.href = data.redirect; }, 900);
+    const data = await api('POST', '/api/auth/verify-otp', { mobile, otp, portal: _selectedPortal });
+    Toast.success('Login successful! Redirecting…');
+    setTimeout(() => { window.location.href = data.redirect; }, 800);
   } catch(e) {
     Toast.error(e.message);
   } finally { Loading.hide(); }
