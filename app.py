@@ -60,6 +60,25 @@ app.register_blueprint(transporter_invoices_bp)
 app.register_blueprint(admin_invoices_bp)
 app.register_blueprint(admin_compliance_bp)
 
+@app.after_request
+def set_security_headers(response):
+    # Block injected third-party scripts (e.g. BigRock CDN injection).
+    # Only 'self' and inline scripts/styles are permitted; no external origins.
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none';"
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+
 # Start scheduler only in main process (not reloader child)
 if os.environ.get("WERKZEUG_RUN_MAIN") != "false":
     try:
