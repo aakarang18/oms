@@ -64,6 +64,7 @@ def dispatch_po(po_id):
     dispatch_transport = (data.get('dispatch_transport') or '').strip()
     dispatch_lr_number = (data.get('dispatch_lr_number') or '').strip()
     dispatched_at = (data.get('dispatched_at') or '').strip()
+    dispatch_notes = (data.get('dispatch_notes') or '').strip()
 
     if not dispatch_transport:
         return jsonify({'error': 'dispatch_transport is required'}), 400
@@ -83,8 +84,9 @@ def dispatch_po(po_id):
         now = datetime.utcnow().isoformat()
         conn.execute("""
             UPDATE purchase_orders SET status='dispatched', dispatch_transport=?,
-                dispatch_lr_number=?, dispatched_at=?, updated_at=? WHERE id=?
-        """, (dispatch_transport, dispatch_lr_number or None, dispatched_at, now, po_id))
+                dispatch_lr_number=?, dispatched_at=?, dispatch_notes=?, updated_at=? WHERE id=?
+        """, (dispatch_transport, dispatch_lr_number or None, dispatched_at,
+              dispatch_notes or None, now, po_id))
         conn.commit()
         audit(g.user['id'], 'po', po_id, 'dispatched', 'acknowledged', 'dispatched')
         return jsonify({'status': 'dispatched'})

@@ -24,7 +24,7 @@ def _allowed(filename):
 @bp.get('/api/transporter/trips')
 @transporter_required
 def list_my_trips():
-    status = request.args.get('status', '')
+    statuses = request.args.getlist('status')
     conn = get_db()
     try:
         q = """
@@ -34,9 +34,10 @@ def list_my_trips():
             WHERE t.transporter_id=? AND t.is_deleted=0
         """
         params = [g.user['entity_id']]
-        if status:
-            q += ' AND t.status=?'
-            params.append(status)
+        if statuses:
+            placeholders = ','.join('?' * len(statuses))
+            q += f' AND t.status IN ({placeholders})'
+            params.extend(statuses)
         q += ' ORDER BY t.created_at DESC'
         rows = conn.execute(q, params).fetchall()
         return jsonify([dict(r) for r in rows])

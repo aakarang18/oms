@@ -310,6 +310,7 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
     dispatch_transport  TEXT,
     dispatch_lr_number  TEXT,
     dispatched_at       TEXT,
+    dispatch_notes      TEXT,
     created_by          TEXT NOT NULL REFERENCES users(id),
     is_deleted          INTEGER NOT NULL DEFAULT 0,
     created_at          TEXT NOT NULL,
@@ -515,7 +516,19 @@ CREATE INDEX IF NOT EXISTS idx_tdocs_expiry         ON transporter_documents(exp
 CREATE INDEX IF NOT EXISTS idx_vedocs_expiry        ON vehicle_documents(expiry_status, expiry_date);
 """)
     conn.commit()
+
+    # ── Incremental migrations (idempotent ALTER TABLE additions) ────────────
+    _add_column_if_missing(conn, "purchase_orders", "dispatch_notes", "TEXT")
+
     conn.close()
+
+
+def _add_column_if_missing(conn, table: str, column: str, col_type: str):
+    """Add a column to an existing table if it doesn't exist yet."""
+    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in existing:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
+        conn.commit()
 
 
 if __name__ == '__main__':

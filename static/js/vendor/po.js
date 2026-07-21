@@ -103,6 +103,7 @@ function renderVendorPODetailModal(po) {
         ${po.dispatched_at   ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Dispatched</div><div>${fmtDate(po.dispatched_at)}</div></div>` : ''}
         ${po.dispatch_transport ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">Transport</div><div>${escHtml(po.dispatch_transport)}</div></div>` : ''}
         ${po.dispatch_lr_number ? `<div><div style="font-size:0.75rem;color:var(--gray-500)">LR No.</div><div>${escHtml(po.dispatch_lr_number)}</div></div>` : ''}
+        ${po.dispatch_notes ? `<div style="grid-column:1/-1"><div style="font-size:0.75rem;color:var(--gray-500)">Dispatch Notes</div><div>${escHtml(po.dispatch_notes)}</div></div>` : ''}
       </div>
       ${po.terms_conditions ? `<div style="margin-top:1rem"><div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.3rem">Terms & Conditions</div><p style="font-size:0.82rem;margin:0;color:var(--gray-600)">${escHtml(po.terms_conditions)}</p></div>` : ''}
       ${po.grn ? renderGRNSummary(po.grn) : ''}
@@ -169,6 +170,10 @@ function openDispatchModal(poId) {
         <label class="form-label required">Dispatch Date</label>
         <input class="form-control" type="date" id="disp-date" value="${today}">
       </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="disp-notes" rows="2" placeholder="Any additional dispatch notes..."></textarea>
+      </div>
       <div id="dispatch-errors"></div>
     </div>
     <div class="modal-footer">
@@ -193,10 +198,11 @@ async function submitDispatch(poId) {
       '<div class="alert alert-danger">Dispatch date is required</div>';
     return;
   }
+  const notes = document.getElementById('disp-notes').value.trim();
   Loading.show();
   try {
     await api('POST', `/api/vendor/pos/${poId}/dispatch`,
-      { dispatch_transport: transport, dispatch_lr_number: lr, dispatched_at: date });
+      { dispatch_transport: transport, dispatch_lr_number: lr, dispatched_at: date, dispatch_notes: notes || null });
     Toast.success('Dispatch details saved');
     closeModal('dispatch-modal');
     closeModal('vendor-po-detail-modal');

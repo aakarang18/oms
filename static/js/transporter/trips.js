@@ -29,19 +29,21 @@ async function loadTripTab(tabKey, elId) {
     let url = '/api/transporter/trips';
     if (tabKey === 'assigned') url += '?status=assigned';
     else if (tabKey === 'active') url += '?status=accepted&status=loaded&status=in_transit';
-    else if (tabKey === 'pod') url += '?status=delivered';
+    else if (tabKey === 'pod') url += '?status=delivered&status=pod_uploaded';
 
     let trips = await api('GET', url);
     if (!Array.isArray(trips)) trips = [];
 
     if (tabKey === 'active') {
       trips = trips.filter(t => ['accepted','loaded','in_transit'].includes(t.status));
+    } else if (tabKey === 'pod') {
+      trips = trips.filter(t => ['delivered','pod_uploaded'].includes(t.status));
     }
 
     if (!trips.length) {
       const icons = { assigned:'🚛', active:'🚛', pod:'📋', all:'🚛' };
       const msgs  = { assigned:'No pending assignments', active:'No active trips',
-                      pod:'No trips awaiting POD upload', all:'No trips yet' };
+                      pod:'No trips pending POD upload or approval', all:'No trips yet' };
       el.innerHTML = `<div class="empty-state"><div class="empty-icon">${icons[tabKey]||'🚛'}</div><p>${msgs[tabKey]||'No trips'}</p></div>`;
       return;
     }
@@ -60,6 +62,7 @@ function renderTripCard(t) {
     loaded: `<button class="btn btn-primary btn-sm" onclick="updateTripStatus('${t.id}','in_transit')">Mark In Transit</button>`,
     in_transit: `<button class="btn btn-primary btn-sm" onclick="updateTripStatus('${t.id}','delivered')">Mark Delivered</button>`,
     delivered: `<button class="btn btn-primary btn-sm" onclick="openPODModal('${t.id}')">Upload POD</button>`,
+    pod_uploaded: `<span style="font-size:0.82rem;color:var(--success);font-weight:600">✓ POD submitted — awaiting admin approval</span>`,
   };
 
   return `
