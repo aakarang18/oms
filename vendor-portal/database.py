@@ -59,10 +59,10 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS vendors (
     id                      TEXT PRIMARY KEY,
-    company_name            TEXT NOT NULL,
-    gstin                   TEXT UNIQUE NOT NULL,
-    pan_number              TEXT UNIQUE NOT NULL,
-    company_type            TEXT NOT NULL,
+    company_name            TEXT,
+    gstin                   TEXT UNIQUE,
+    pan_number              TEXT UNIQUE,
+    company_type            TEXT,
     msme_registered         INTEGER NOT NULL DEFAULT 0,
     msme_reg_number         TEXT,
     year_established        INTEGER,
@@ -134,10 +134,10 @@ CREATE TABLE IF NOT EXISTS vendor_documents (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS transporters (
     id                      TEXT PRIMARY KEY,
-    company_name            TEXT NOT NULL,
-    gstin                   TEXT UNIQUE NOT NULL,
-    pan_number              TEXT UNIQUE NOT NULL,
-    company_type            TEXT NOT NULL,
+    company_name            TEXT,
+    gstin                   TEXT UNIQUE,
+    pan_number              TEXT UNIQUE,
+    company_type            TEXT,
     msme_registered         INTEGER NOT NULL DEFAULT 0,
     msme_reg_number         TEXT,
     year_established        INTEGER,
@@ -512,6 +512,15 @@ CREATE INDEX IF NOT EXISTS idx_vdocs_expiry         ON vendor_documents(expiry_s
 CREATE INDEX IF NOT EXISTS idx_tdocs_expiry         ON transporter_documents(expiry_status, expiry_date);
 CREATE INDEX IF NOT EXISTS idx_vedocs_expiry        ON vehicle_documents(expiry_status, expiry_date);
 """)
+    conn.commit()
+
+    # ── Migrations: convert empty-string drafts to NULL ──────────────────────
+    # Empty strings in UNIQUE columns block new registrations; NULL is safe.
+    for table in ("vendors", "transporters"):
+        for col in ("gstin", "pan_number", "company_name", "company_type"):
+            conn.execute(
+                f"UPDATE {table} SET {col}=NULL WHERE {col}='' AND status='draft'"
+            )
     conn.commit()
     conn.close()
 

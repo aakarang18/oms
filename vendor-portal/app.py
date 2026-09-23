@@ -259,7 +259,7 @@ def api_vendor_register_init():
         conn.execute(
             """INSERT INTO vendors(id,company_name,gstin,pan_number,company_type,
                status,registration_step,draft_expires_at,created_at,updated_at)
-               VALUES(?,'','','','',
+               VALUES(?,NULL,NULL,NULL,NULL,
                'draft',1,?,?,?)""",
             (vendor_id, draft_expires, now, now)
         )
@@ -342,7 +342,7 @@ def api_transporter_register_init():
         conn.execute(
             """INSERT INTO transporters(id,company_name,gstin,pan_number,company_type,
                status,registration_step,draft_expires_at,created_at,updated_at)
-               VALUES(?,'','','','','draft',1,?,?,?)""",
+               VALUES(?,NULL,NULL,NULL,NULL,'draft',1,?,?,?)""",
             (transporter_id, draft_expires, now, now)
         )
         conn.execute(
