@@ -514,15 +514,138 @@ CREATE INDEX IF NOT EXISTS idx_vedocs_expiry        ON vehicle_documents(expiry_
 """)
     conn.commit()
 
-    # ── Migrations: convert empty-string drafts to NULL ──────────────────────
-    # Empty strings in UNIQUE columns block new registrations; NULL is safe.
-    for table in ("vendors", "transporters"):
-        for col in ("gstin", "pan_number", "company_name", "company_type"):
-            conn.execute(
-                f"UPDATE {table} SET {col}=NULL WHERE {col}='' AND status='draft'"
-            )
+    # ── Migrations ────────────────────────────────────────────────────────────
+    _migrate_remove_not_null(conn)
     conn.commit()
     conn.close()
+
+
+def _migrate_remove_not_null(conn):
+    """
+    SQLite cannot ALTER COLUMN, so we rebuild vendors and transporters to drop
+    NOT NULL from pan_number, gstin, company_name, and company_type.
+    Runs only when the live table still has those NOT NULL constraints.
+    Safe to call on a fresh DB (the old table won't exist, nothing happens).
+    """
+    for table in ("vendors", "transporters"):
+        # Check if pan_number is still NOT NULL in the live table
+        cols = {row[1]: row[3] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if not cols:
+            continue  # table doesn't exist yet (fresh DB handled by CREATE TABLE IF NOT EXISTS)
+        if cols.get("pan_number") == 0:
+            continue  # notnull==0 means nullable — migration already applied
+
+        # Rebuild: rename → create new → copy → drop old
+        conn.execute("PRAGMA foreign_keys=OFF")
+        conn.execute(f"ALTER TABLE {table} RENAME TO _{table}_old")
+
+        if table == "vendors":
+            conn.execute("""
+                CREATE TABLE vendors (
+                    id                      TEXT PRIMARY KEY,
+                    company_name            TEXT,
+                    gstin                   TEXT UNIQUE,
+                    pan_number              TEXT UNIQUE,
+                    company_type            TEXT,
+                    msme_registered         INTEGER NOT NULL DEFAULT 0,
+                    msme_reg_number         TEXT,
+                    year_established        INTEGER,
+                    num_employees           INTEGER,
+                    annual_turnover_range   TEXT,
+                    reg_addr_line1          TEXT,
+                    reg_addr_line2          TEXT,
+                    reg_addr_city           TEXT,
+                    reg_addr_state          TEXT,
+                    reg_addr_pin            TEXT,
+                    reg_addr_country        TEXT DEFAULT 'India',
+                    factory_addr_line1      TEXT,
+                    factory_addr_line2      TEXT,
+                    factory_addr_city       TEXT,
+                    factory_addr_state      TEXT,
+                    factory_addr_pin        TEXT,
+                    factory_addr_country    TEXT,
+                    contact_name            TEXT,
+                    contact_designation     TEXT,
+                    contact_mobile          TEXT,
+                    contact_email           TEXT,
+                    bank_account_holder     TEXT,
+                    bank_account_number     TEXT,
+                    bank_ifsc               TEXT,
+                    bank_name               TEXT,
+                    bank_account_type       TEXT,
+                    status                  TEXT NOT NULL DEFAULT 'draft',
+                    rejection_reason        TEXT,
+                    info_request_note       TEXT,
+                    approved_by             TEXT REFERENCES users(id),
+                    approved_at             TEXT,
+                    registration_step       INTEGER NOT NULL DEFAULT 1,
+                    draft_expires_at        TEXT,
+                    rating                  REAL DEFAULT 0,
+                    is_deleted              INTEGER NOT NULL DEFAULT 0,
+                    created_at              TEXT NOT NULL,
+                    updated_at              TEXT NOT NULL
+                )
+            """)
+        else:  # transporters
+            conn.execute("""
+                CREATE TABLE transporters (
+                    id                      TEXT PRIMARY KEY,
+                    company_name            TEXT,
+                    gstin                   TEXT UNIQUE,
+                    pan_number              TEXT UNIQUE,
+                    company_type            TEXT,
+                    msme_registered         INTEGER NOT NULL DEFAULT 0,
+                    msme_reg_number         TEXT,
+                    year_established        INTEGER,
+                    num_employees           INTEGER,
+                    annual_turnover_range   TEXT,
+                    reg_addr_line1          TEXT,
+                    reg_addr_line2          TEXT,
+                    reg_addr_city           TEXT,
+                    reg_addr_state          TEXT,
+                    reg_addr_pin            TEXT,
+                    reg_addr_country        TEXT DEFAULT 'India',
+                    contact_name            TEXT,
+                    contact_designation     TEXT,
+                    contact_mobile          TEXT,
+                    contact_email           TEXT,
+                    bank_account_holder     TEXT,
+                    bank_account_number     TEXT,
+                    bank_ifsc               TEXT,
+                    bank_name               TEXT,
+                    bank_account_type       TEXT,
+                    status                  TEXT NOT NULL DEFAULT 'draft',
+                    rejection_reason        TEXT,
+                    info_request_note       TEXT,
+                    approved_by             TEXT REFERENCES users(id),
+                    approved_at             TEXT,
+                    registration_step       INTEGER NOT NULL DEFAULT 1,
+                    draft_expires_at        TEXT,
+                    rating                  REAL DEFAULT 0,
+                    is_deleted              INTEGER NOT NULL DEFAULT 0,
+                    created_at              TEXT NOT NULL,
+                    updated_at              TEXT NOT NULL
+                )
+            """)
+
+        # Copy all rows; NULLIF converts '' → NULL for the affected columns.
+        # Build the SELECT dynamically from PRAGMA so it works against any
+        # subset of columns (test DBs, partial migrations, etc.)
+        old_cols = [row[1] for row in conn.execute(f"PRAGMA table_info(_{table}_old)")]
+        new_cols = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
+        nullable = {"company_name", "gstin", "pan_number", "company_type"}
+        select_exprs = []
+        for col in new_cols:
+            if col in old_cols:
+                select_exprs.append(f"NULLIF({col}, '')" if col in nullable else col)
+            else:
+                select_exprs.append("NULL")
+        conn.execute(
+            f"INSERT INTO {table} ({', '.join(new_cols)}) "
+            f"SELECT {', '.join(select_exprs)} FROM _{table}_old"
+        )
+        conn.execute(f"DROP TABLE _{table}_old")
+        conn.execute("PRAGMA foreign_keys=ON")
 
 
 def next_sequence(prefix: str) -> str:
