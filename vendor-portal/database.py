@@ -528,6 +528,18 @@ def _migrate_remove_not_null(conn):
     Safe to call on a fresh DB (the old table won't exist, nothing happens).
     """
     for table in ("vendors", "transporters"):
+        # Clean up any _old/_new leftovers from a previous broken run of this
+        # migration (the old code renamed vendors→_vendors_old then crashed).
+        # We do this with FK off so FK-reference rewriting doesn't happen again.
+        conn.execute("PRAGMA foreign_keys=OFF")
+        for leftover in (f"_{table}_old", f"_{table}_new"):
+            existing = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (leftover,)
+            ).fetchone()
+            if existing:
+                conn.execute(f"DROP TABLE {leftover}")
+        conn.execute("PRAGMA foreign_keys=ON")
+
         # Check if pan_number is still NOT NULL in the live table
         cols = {row[1]: row[3] for row in conn.execute(f"PRAGMA table_info({table})")}
         if not cols:
@@ -535,13 +547,18 @@ def _migrate_remove_not_null(conn):
         if cols.get("pan_number") == 0:
             continue  # notnull==0 means nullable — migration already applied
 
-        # Rebuild: rename → create new → copy → drop old
+        # Rebuild: create new → copy → drop old → rename new to original
+        # We deliberately do NOT rename the original table first, because
+        # ALTER TABLE vendors RENAME TO _vendors_old causes SQLite to rewrite
+        # FK references in vendor_categories/vendor_products from "vendors" to
+        # "_vendors_old". Dropping _vendors_old then leaves those FKs dangling,
+        # breaking all DML on those tables. Instead we create alongside, then
+        # drop the old table and rename the new one into place.
         conn.execute("PRAGMA foreign_keys=OFF")
-        conn.execute(f"ALTER TABLE {table} RENAME TO _{table}_old")
 
         if table == "vendors":
             conn.execute("""
-                CREATE TABLE vendors (
+                CREATE TABLE _vendors_new (
                     id                      TEXT PRIMARY KEY,
                     company_name            TEXT,
                     gstin                   TEXT UNIQUE,
@@ -588,7 +605,7 @@ def _migrate_remove_not_null(conn):
             """)
         else:  # transporters
             conn.execute("""
-                CREATE TABLE transporters (
+                CREATE TABLE _transporters_new (
                     id                      TEXT PRIMARY KEY,
                     company_name            TEXT,
                     gstin                   TEXT UNIQUE,
@@ -631,8 +648,9 @@ def _migrate_remove_not_null(conn):
         # Copy all rows; NULLIF converts '' → NULL for the affected columns.
         # Build the SELECT dynamically from PRAGMA so it works against any
         # subset of columns (test DBs, partial migrations, etc.)
-        old_cols = [row[1] for row in conn.execute(f"PRAGMA table_info(_{table}_old)")]
-        new_cols = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
+        new_name = f"_{table}_new"
+        old_cols = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
+        new_cols = [row[1] for row in conn.execute(f"PRAGMA table_info({new_name})")]
         nullable = {"company_name", "gstin", "pan_number", "company_type"}
         select_exprs = []
         for col in new_cols:
@@ -641,10 +659,11 @@ def _migrate_remove_not_null(conn):
             else:
                 select_exprs.append("NULL")
         conn.execute(
-            f"INSERT INTO {table} ({', '.join(new_cols)}) "
-            f"SELECT {', '.join(select_exprs)} FROM _{table}_old"
+            f"INSERT INTO {new_name} ({', '.join(new_cols)}) "
+            f"SELECT {', '.join(select_exprs)} FROM {table}"
         )
-        conn.execute(f"DROP TABLE _{table}_old")
+        conn.execute(f"DROP TABLE {table}")
+        conn.execute(f"ALTER TABLE {new_name} RENAME TO {table}")
         conn.execute("PRAGMA foreign_keys=ON")
 
 
