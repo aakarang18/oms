@@ -107,23 +107,26 @@ def approve_vendor(vid):
         audit(g.user["id"], "vendor", vid, "Approved vendor registration",
               before={"status": vendor["status"]}, after={"status": "approved"})
 
-        # Notify vendor users
-        users = conn.execute(
-            "SELECT id, mobile, email FROM users WHERE entity_type='vendor' AND entity_id=?", (vid,)
-        ).fetchall()
-        _notify_entity(conn, users, vid, "vendor",
-                       "Registration Approved \U0001f389",
-                       f"Your registration for {vendor['company_name']} has been approved. You can now access all portal features.",
-                       "registration_approved", now)
+        # Notify vendor users — best-effort, don't fail the approval if notifications/email fail
+        try:
+            users = conn.execute(
+                "SELECT id, mobile, email FROM users WHERE entity_type='vendor' AND entity_id=?", (vid,)
+            ).fetchall()
+            _notify_entity(conn, users, vid, "vendor",
+                           "Registration Approved \U0001f389",
+                           f"Your registration for {vendor['company_name']} has been approved. You can now access all portal features.",
+                           "registration_approved", now)
 
-        portal_url = request.host_url.rstrip("/") + "/vendor"
-        for u in users:
-            if u["email"]:
-                subj, html = email_registration_approved(vendor["company_name"], portal_url)
-                send_email(u["email"], subj, html)
-            if u["mobile"]:
-                send_sms(u["mobile"],
-                    f"Congratulations! Your vendor registration with Amar Alum has been approved. Login at {portal_url}")
+            portal_url = request.host_url.rstrip("/") + "/vendor"
+            for u in users:
+                if u["email"]:
+                    subj, html = email_registration_approved(vendor["company_name"], portal_url)
+                    send_email(u["email"], subj, html)
+                if u["mobile"]:
+                    send_sms(u["mobile"],
+                        f"Congratulations! Your vendor registration with Amar Alum has been approved. Login at {portal_url}")
+        except Exception:
+            pass
 
         return jsonify({"message": f"{vendor['company_name']} approved"})
     finally:
