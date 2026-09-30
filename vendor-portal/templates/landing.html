@@ -274,17 +274,17 @@
           <input type="tel" id="reg-mobile" placeholder="10-digit mobile number" maxlength="10">
         </div>
         <div class="form-group">
-          <label for="reg-email">Email Address (optional)</label>
-          <input type="email" id="reg-email" placeholder="company@example.com">
-        </div>
-        <div class="form-group">
-          <label for="reg-password">Password (optional)</label>
-          <input type="password" id="reg-password" placeholder="Set a password for future logins" autocomplete="new-password">
-          <div class="form-hint">At least 6 characters. You can also log in with OTP.</div>
+          <label for="reg-password">Password <span style="color:var(--gray-400);font-weight:400;">(optional)</span></label>
+          <input type="password" id="reg-password" placeholder="Choose a password" autocomplete="new-password">
+          <div class="form-hint">Set a password to enable easy login later. You can always log in with OTP instead.</div>
         </div>
         <div class="form-group" id="reg-confirm-pw-group" style="display:none">
           <label for="reg-confirm-password">Confirm Password <span class="required">*</span></label>
           <input type="password" id="reg-confirm-password" placeholder="Re-enter password" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address <span style="color:var(--gray-400);font-weight:400;">(optional)</span></label>
+          <input type="email" id="reg-email" placeholder="company@example.com">
         </div>
 
         <div id="reg-step-otp" class="otp-section">
