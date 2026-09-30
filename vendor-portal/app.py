@@ -161,22 +161,27 @@ def api_verify_otp():
 @app.post("/api/auth/login/password")
 def api_login_password():
     data = request.get_json(silent=True) or {}
-    mobile   = (data.get("mobile") or "").strip()
+    identity = (data.get("identity") or data.get("mobile") or "").strip()
     password = (data.get("password") or "")
 
-    if not mobile or not password:
-        return jsonify({"error": "Mobile and password are required"}), 400
+    if not identity or not password:
+        return jsonify({"error": "Mobile/email and password are required"}), 400
 
     conn = get_db()
     try:
-        user = conn.execute(
-            "SELECT * FROM users WHERE mobile=?", (mobile,)
-        ).fetchone()
+        if "@" in identity:
+            user = conn.execute(
+                "SELECT * FROM users WHERE email=?", (identity,)
+            ).fetchone()
+        else:
+            user = conn.execute(
+                "SELECT * FROM users WHERE mobile=?", (identity,)
+            ).fetchone()
     finally:
         conn.close()
 
     if not user:
-        return jsonify({"error": "Invalid mobile number or password"}), 401
+        return jsonify({"error": "Invalid credentials"}), 401
 
     if not user["is_active"]:
         return jsonify({"error": "Account is inactive"}), 403
@@ -186,7 +191,7 @@ def api_login_password():
 
     if not user["password_hash"] or not verify_password(password, user["password_hash"]):
         record_failed_attempt(user["id"])
-        return jsonify({"error": "Invalid mobile number or password"}), 401
+        return jsonify({"error": "Invalid credentials"}), 401
 
     clear_failed_attempts(user["id"])
     token = create_session(user["id"])
