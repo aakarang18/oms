@@ -16,7 +16,8 @@ from auth import (
     create_otp, validate_otp, create_session, destroy_session,
     load_session, record_failed_attempt, clear_failed_attempts,
     is_locked, login_required, admin_required, vendor_required,
-    transporter_required, roles_required, audit, new_id, ROLE_PORTAL
+    transporter_required, roles_required, audit, new_id, ROLE_PORTAL,
+    hash_password, verify_password
 )
 from email_service import init_mail, send_email, email_otp
 from sms_service import send_otp as send_otp_sms
@@ -157,6 +158,56 @@ def api_verify_otp():
     return resp
 
 
+@app.post("/api/auth/login/password")
+def api_login_password():
+    data = request.get_json(silent=True) or {}
+    mobile   = (data.get("mobile") or "").strip()
+    password = (data.get("password") or "")
+
+    if not mobile or not password:
+        return jsonify({"error": "Mobile and password are required"}), 400
+
+    conn = get_db()
+    try:
+        user = conn.execute(
+            "SELECT * FROM users WHERE mobile=?", (mobile,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if not user:
+        return jsonify({"error": "Invalid mobile number or password"}), 401
+
+    if not user["is_active"]:
+        return jsonify({"error": "Account is inactive"}), 403
+
+    if is_locked(user):
+        return jsonify({"error": "Account temporarily locked. Try again in 15 minutes."}), 429
+
+    if not user["password_hash"] or not verify_password(password, user["password_hash"]):
+        record_failed_attempt(user["id"])
+        return jsonify({"error": "Invalid mobile number or password"}), 401
+
+    clear_failed_attempts(user["id"])
+    token = create_session(user["id"])
+
+    portal = ROLE_PORTAL.get(user["role"], "vendor")
+    redirect_url = f"/{portal}"
+
+    resp = make_response(jsonify({
+        "message": "Login successful",
+        "redirect": redirect_url,
+        "role": user["role"],
+        "portal": portal
+    }))
+    resp.set_cookie(
+        "portal_session", token,
+        httponly=True, samesite="Lax",
+        max_age=1800
+    )
+    return resp
+
+
 @app.post("/api/auth/logout")
 def api_logout():
     token = request.cookies.get("portal_session")
@@ -235,11 +286,14 @@ def admin_portal():
 def api_vendor_register_init():
     """Step 0: start registration — create user + vendor draft."""
     data = request.get_json(silent=True) or {}
-    mobile = (data.get("mobile") or "").strip()
-    email  = (data.get("email") or "").strip() or None
+    mobile   = (data.get("mobile") or "").strip()
+    email    = (data.get("email") or "").strip() or None
+    password = (data.get("password") or "").strip() or None
 
     if not mobile or len(mobile) < 10:
         return jsonify({"error": "Valid mobile number required"}), 400
+    if password and len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
 
     conn = get_db()
     try:
@@ -264,10 +318,10 @@ def api_vendor_register_init():
             (vendor_id, draft_expires, now, now)
         )
         conn.execute(
-            """INSERT INTO users(id,mobile,email,role,entity_type,entity_id,
+            """INSERT INTO users(id,mobile,email,password_hash,role,entity_type,entity_id,
                is_active,created_at,updated_at)
-               VALUES(?,?,?,'vendor_admin','vendor',?,0,?,?)""",
-            (user_id, mobile, email, vendor_id, now, now)
+               VALUES(?,?,?,?,'vendor_admin','vendor',?,0,?,?)""",
+            (user_id, mobile, email, hash_password(password) if password else None, vendor_id, now, now)
         )
         conn.commit()
 
@@ -319,11 +373,14 @@ def api_vendor_verify_otp():
 @app.post("/api/register/transporter/init")
 def api_transporter_register_init():
     data = request.get_json(silent=True) or {}
-    mobile = (data.get("mobile") or "").strip()
-    email  = (data.get("email") or "").strip() or None
+    mobile   = (data.get("mobile") or "").strip()
+    email    = (data.get("email") or "").strip() or None
+    password = (data.get("password") or "").strip() or None
 
     if not mobile or len(mobile) < 10:
         return jsonify({"error": "Valid mobile number required"}), 400
+    if password and len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
 
     conn = get_db()
     try:
@@ -346,10 +403,10 @@ def api_transporter_register_init():
             (transporter_id, draft_expires, now, now)
         )
         conn.execute(
-            """INSERT INTO users(id,mobile,email,role,entity_type,entity_id,
+            """INSERT INTO users(id,mobile,email,password_hash,role,entity_type,entity_id,
                is_active,created_at,updated_at)
-               VALUES(?,?,?,'transporter_admin','transporter',?,0,?,?)""",
-            (user_id, mobile, email, transporter_id, now, now)
+               VALUES(?,?,?,?,'transporter_admin','transporter',?,0,?,?)""",
+            (user_id, mobile, email, hash_password(password) if password else None, transporter_id, now, now)
         )
         conn.commit()
 

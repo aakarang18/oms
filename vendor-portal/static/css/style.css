@@ -322,6 +322,7 @@ small { font-size: .8125rem; color: var(--gray-500); }
 
 /* ── Forms ── */
 .form-group { margin-bottom: 18px; }
+.form-hint { font-size: .75rem; color: var(--gray-500); margin-top: 4px; }
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, g
 
 from database import get_db
-from auth import admin_required, roles_required, audit, new_id
+from auth import admin_required, roles_required, audit, new_id, hash_password
 from email_service import send_email, email_registration_approved, email_registration_rejected
 from sms_service import send_sms
 
@@ -221,6 +221,62 @@ def request_vendor_info(vid):
                     f"Amar Alum: Action required for your vendor registration. Please check your email and update the portal.")
 
         return jsonify({"message": "Information request sent to vendor"})
+    finally:
+        conn.close()
+
+
+# ── Vendor / Transporter password reset ──────────────────────────────────────
+
+@bp.post("/api/admin/vendors/<vid>/reset-password")
+@_procurement_required
+def reset_vendor_password(vid):
+    import random, string
+    conn = get_db()
+    try:
+        vendor = conn.execute(
+            "SELECT company_name FROM vendors WHERE id=? AND is_deleted=0", (vid,)
+        ).fetchone()
+        if not vendor:
+            return jsonify({"error": "Not found"}), 404
+
+        temp_pw = ''.join(random.SystemRandom().choices(string.ascii_letters + string.digits, k=10))
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            "UPDATE users SET password_hash=?, updated_at=? WHERE entity_type='vendor' AND entity_id=?",
+            (hash_password(temp_pw), now, vid)
+        )
+        conn.commit()
+
+        audit(g.user["id"], "vendor", vid, "Reset vendor portal password")
+        return jsonify({"temporary_password": temp_pw,
+                        "message": "Password has been reset. Share this temporary password with the vendor."})
+    finally:
+        conn.close()
+
+
+@bp.post("/api/admin/transporters/<tid>/reset-password")
+@_transport_required
+def reset_transporter_password(tid):
+    import random, string
+    conn = get_db()
+    try:
+        transporter = conn.execute(
+            "SELECT company_name FROM transporters WHERE id=? AND is_deleted=0", (tid,)
+        ).fetchone()
+        if not transporter:
+            return jsonify({"error": "Not found"}), 404
+
+        temp_pw = ''.join(random.SystemRandom().choices(string.ascii_letters + string.digits, k=10))
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            "UPDATE users SET password_hash=?, updated_at=? WHERE entity_type='transporter' AND entity_id=?",
+            (hash_password(temp_pw), now, tid)
+        )
+        conn.commit()
+
+        audit(g.user["id"], "transporter", tid, "Reset transporter portal password")
+        return jsonify({"temporary_password": temp_pw,
+                        "message": "Password has been reset. Share this temporary password with the transporter."})
     finally:
         conn.close()
 

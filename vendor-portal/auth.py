@@ -43,6 +43,14 @@ def verify_otp_hash(otp: str, hashed: str) -> bool:
     return bcrypt.checkpw(otp.encode(), hashed.encode())
 
 
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
+
 def create_otp(user_id: str, purpose: str) -> str:
     """Create a new OTP record, invalidate previous ones, return plaintext OTP."""
     otp = generate_otp()

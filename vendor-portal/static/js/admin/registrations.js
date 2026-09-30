@@ -178,6 +178,7 @@ function renderRegDetailModal(data) {
     </div>
     <div class="modal-footer" style="gap:0.75rem;flex-wrap:wrap;">
       <button class="btn btn-outline" onclick="closeModal('reg-detail-modal')">Close</button>
+      <button class="btn btn-outline btn-sm" onclick="resetEntityPassword('${entity.id}')" title="Generate a temporary password and show it to the admin">Reset Password</button>
       ${canAct ? `
         <button class="btn btn-outline" onclick="showInfoRequestForm('${entity.id}')">Request Info</button>
         <button class="btn btn-danger" onclick="showRejectForm('${entity.id}')">Reject</button>
@@ -284,6 +285,47 @@ async function submitInfoRequest(entityId) {
 
 function cancelRegAction(entityId) {
   openRegDetail(entityId);
+}
+
+async function resetEntityPassword(entityId) {
+  const entityLabel = _regCurrentTab === 'vendors' ? 'vendor' : 'transporter';
+  if (!confirm(`Generate a temporary password for this ${entityLabel}? The current password (if any) will be replaced.`)) return;
+  const endpoint = _regCurrentTab === 'vendors'
+    ? `/api/admin/vendors/${entityId}/reset-password`
+    : `/api/admin/transporters/${entityId}/reset-password`;
+  Loading.show();
+  try {
+    const res = await api('POST', endpoint);
+    const html = `
+      <div class="modal-header"><h3>Temporary Password Generated</h3></div>
+      <div class="modal-body">
+        <p style="color:var(--gray-600);margin-bottom:1rem;">Share this password with the ${entityLabel} over phone or WhatsApp. They can use it to log in with their registered mobile number.</p>
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:1.25rem;text-align:center;">
+          <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.5rem;">Temporary Password</div>
+          <div style="font-size:1.5rem;font-weight:700;letter-spacing:0.1em;color:var(--brand-dark);font-family:monospace;" id="temp-pw-display">${escHtml(res.temporary_password)}</div>
+        </div>
+        <p style="color:var(--gray-500);font-size:0.8rem;margin-top:1rem;">This password is stored immediately. The ${entityLabel} can change it from their portal settings after logging in.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="navigator.clipboard.writeText('${escHtml(res.temporary_password)}').then(()=>Toast.success('Copied!'))">Copy</button>
+        <button class="btn btn-primary" onclick="closeModal('reset-pw-modal')">Done</button>
+      </div>`;
+    let modal = document.getElementById('reset-pw-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'reset-pw-modal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `<div class="modal-box" style="max-width:480px;">${html}</div>`;
+      document.body.appendChild(modal);
+    } else {
+      modal.querySelector('.modal-box').innerHTML = html;
+    }
+    openModal('reset-pw-modal');
+  } catch (e) {
+    Toast.error(e.message || 'Failed to reset password');
+  } finally {
+    Loading.hide();
+  }
 }
 
 // Audit log

@@ -93,6 +93,22 @@
     .otp-section { display: none; }
     .otp-section.show { display: block; }
 
+    .login-method-tabs {
+      display: flex; gap: 0; margin-bottom: 20px;
+      border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden;
+    }
+    .login-method-tab {
+      flex: 1; padding: 8px 12px;
+      background: var(--gray-50); border: none; cursor: pointer;
+      font-size: .8125rem; font-weight: 600; color: var(--gray-500);
+      transition: all .15s;
+    }
+    .login-method-tab.active {
+      background: var(--brand-dark); color: #fff;
+    }
+    .login-method-panel { display: none; }
+    .login-method-panel.active { display: block; }
+
     .divider {
       text-align: center; position: relative; margin: 20px 0;
       color: var(--gray-400); font-size: .78rem;
@@ -178,40 +194,62 @@
       <!-- LOGIN TAB -->
       <div id="tab-login" class="login-card-body">
         <h2>Welcome back</h2>
-        <p>Enter your registered mobile number to receive an OTP.</p>
 
-        <div id="login-step-1">
-          <div class="form-group">
-            <label for="login-mobile">Mobile Number <span class="required">*</span></label>
-            <input type="tel" id="login-mobile" placeholder="10-digit mobile number" maxlength="10">
-          </div>
-          <button class="btn btn-dark btn-lg" style="width:100%" onclick="requestLoginOtp()">
-            Send OTP
-          </button>
+        <div class="login-method-tabs">
+          <button class="login-method-tab active" onclick="switchLoginMethod('otp', this)">Login with OTP</button>
+          <button class="login-method-tab" onclick="switchLoginMethod('password', this)">Login with Password</button>
         </div>
 
-        <div id="login-step-2" class="otp-section">
-          <div class="alert alert-info">
-            OTP sent to <strong id="login-mobile-display"></strong>.
-            <a href="#" onclick="backToStep1()" style="margin-left:8px">Change</a>
-          </div>
-          <div class="form-group">
-            <label for="login-otp">Enter OTP <span class="required">*</span></label>
-            <div class="otp-input-group">
-              <input type="text" id="login-otp" placeholder="6-digit OTP"
-                     maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
-              <button class="btn btn-outline" onclick="requestLoginOtp(true)" id="resend-btn">
-                Resend
-              </button>
+        <!-- OTP method -->
+        <div id="login-method-otp" class="login-method-panel active">
+          <div id="login-step-1">
+            <div class="form-group">
+              <label for="login-mobile">Mobile Number <span class="required">*</span></label>
+              <input type="tel" id="login-mobile" placeholder="10-digit mobile number" maxlength="10">
             </div>
+            <button class="btn btn-dark btn-lg" style="width:100%" onclick="requestLoginOtp()">
+              Send OTP
+            </button>
           </div>
-          <button class="btn btn-dark btn-lg" style="width:100%" onclick="verifyLoginOtp()">
-            Verify & Sign In
-          </button>
+
+          <div id="login-step-2" class="otp-section">
+            <div class="alert alert-info">
+              OTP sent to <strong id="login-mobile-display"></strong>.
+              <a href="#" onclick="backToStep1()" style="margin-left:8px">Change</a>
+            </div>
+            <div class="form-group">
+              <label for="login-otp">Enter OTP <span class="required">*</span></label>
+              <div class="otp-input-group">
+                <input type="text" id="login-otp" placeholder="6-digit OTP"
+                       maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
+                <button class="btn btn-outline" onclick="requestLoginOtp(true)" id="resend-btn">
+                  Resend
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-dark btn-lg" style="width:100%" onclick="verifyLoginOtp()">
+              Verify & Sign In
+            </button>
+          </div>
+
+          <div id="login-dev-otp" style="display:none;margin-top:16px" class="alert alert-warning">
+            <strong>DEV MODE — OTP:</strong> <span id="dev-otp-val"></span>
+          </div>
         </div>
 
-        <div id="login-dev-otp" style="display:none;margin-top:16px" class="alert alert-warning">
-          <strong>DEV MODE — OTP:</strong> <span id="dev-otp-val"></span>
+        <!-- Password method -->
+        <div id="login-method-password" class="login-method-panel">
+          <div class="form-group">
+            <label for="pw-login-mobile">Mobile Number <span class="required">*</span></label>
+            <input type="tel" id="pw-login-mobile" placeholder="10-digit mobile number" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label for="pw-login-password">Password <span class="required">*</span></label>
+            <input type="password" id="pw-login-password" placeholder="Your password">
+          </div>
+          <button class="btn btn-dark btn-lg" style="width:100%" onclick="loginWithPassword()">
+            Sign In
+          </button>
         </div>
       </div>
 
@@ -238,6 +276,15 @@
         <div class="form-group">
           <label for="reg-email">Email Address (optional)</label>
           <input type="email" id="reg-email" placeholder="company@example.com">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password (optional)</label>
+          <input type="password" id="reg-password" placeholder="Set a password for future logins" autocomplete="new-password">
+          <div class="form-hint">At least 6 characters. You can also log in with OTP.</div>
+        </div>
+        <div class="form-group" id="reg-confirm-pw-group" style="display:none">
+          <label for="reg-confirm-password">Confirm Password <span class="required">*</span></label>
+          <input type="password" id="reg-confirm-password" placeholder="Re-enter password" autocomplete="new-password">
         </div>
 
         <div id="reg-step-otp" class="otp-section">
@@ -290,7 +337,30 @@ function switchLoginTab(tab, btn) {
   else document.querySelector('.login-tab').classList.add('active');
 }
 
+function switchLoginMethod(method, btn) {
+  document.querySelectorAll('.login-method-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.login-method-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('login-method-' + method).classList.add('active');
+}
+
 // ── Login flow ────────────────────────────────────────────────────
+async function loginWithPassword() {
+  const mobile   = document.getElementById('pw-login-mobile').value.trim();
+  const password = document.getElementById('pw-login-password').value;
+  if (!validateMobile(mobile)) { Toast.error('Enter a valid 10-digit mobile number'); return; }
+  if (!password) { Toast.error('Enter your password'); return; }
+
+  Loading.show();
+  try {
+    const data = await api('POST', '/api/auth/login/password', { mobile, password });
+    Toast.success('Login successful! Redirecting…');
+    setTimeout(() => { window.location.href = data.redirect; }, 800);
+  } catch(e) {
+    Toast.error(e.message);
+  } finally { Loading.hide(); }
+}
+
 async function requestLoginOtp(isResend = false) {
   const mobile = document.getElementById('login-mobile').value.trim();
   if (!validateMobile(mobile)) { Toast.error('Enter a valid 10-digit mobile number'); return; }
@@ -340,19 +410,30 @@ document.addEventListener('keydown', e => {
   else requestLoginOtp();
 });
 
+// Show confirm-password field when user types a password
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('reg-password')?.addEventListener('input', function() {
+    document.getElementById('reg-confirm-pw-group').style.display = this.value ? 'block' : 'none';
+  });
+});
+
 // ── Register flow ─────────────────────────────────────────────────
 async function startRegistration() {
   if (_regStep === 'otp') { verifyRegOtp(); return; }
 
-  const type   = document.querySelector('input[name="reg-type"]:checked')?.value || 'vendor';
-  const mobile = document.getElementById('reg-mobile').value.trim();
-  const email  = document.getElementById('reg-email').value.trim() || null;
+  const type     = document.querySelector('input[name="reg-type"]:checked')?.value || 'vendor';
+  const mobile   = document.getElementById('reg-mobile').value.trim();
+  const email    = document.getElementById('reg-email').value.trim() || null;
+  const password = document.getElementById('reg-password').value || null;
+  const confirm  = document.getElementById('reg-confirm-password').value;
 
   if (!validateMobile(mobile)) { Toast.error('Enter a valid 10-digit mobile number'); return; }
+  if (password && password.length < 6) { Toast.error('Password must be at least 6 characters'); return; }
+  if (password && password !== confirm) { Toast.error('Passwords do not match'); return; }
 
   Loading.show();
   try {
-    const data = await api('POST', `/api/register/${type}/init`, { mobile, email });
+    const data = await api('POST', `/api/register/${type}/init`, { mobile, email, password });
     _regUserId = data.user_id;
     _regStep = 'otp';
     document.getElementById('reg-step-otp').classList.add('show');
