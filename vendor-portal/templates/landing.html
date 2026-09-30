@@ -321,10 +321,12 @@
 
 <script src="/static/js/common.js"></script>
 <script>
-let _regUserId = null;
-let _regStep   = 'mobile'; // 'mobile' | 'otp'
+let _regUserId      = null;
+let _regStep        = 'mobile'; // 'mobile' | 'otp'
+let _selectedPortal = null;     // set when user clicks a portal link
 
 function setPortal(type) {
+  _selectedPortal = type;
   document.querySelectorAll('.login-tab')[0].click();
   document.getElementById('login-mobile')?.focus();
 }
@@ -353,7 +355,9 @@ async function loginWithPassword() {
 
   Loading.show();
   try {
-    const data = await api('POST', '/api/auth/login/password', { mobile, password });
+    const payload = { mobile, password };
+    if (_selectedPortal) payload.portal = _selectedPortal;
+    const data = await api('POST', '/api/auth/login/password', payload);
     Toast.success('Login successful! Redirecting…');
     setTimeout(() => { window.location.href = data.redirect; }, 800);
   } catch(e) {
