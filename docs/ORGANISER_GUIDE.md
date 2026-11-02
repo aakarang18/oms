@@ -1,6 +1,6 @@
 # Casa Atleta — organiser guide (admin area)
 
-Sign in at **your-domain.in/admin/login** with the email and password your hosting person created for you.
+Sign in at **casaatleta.com/admin/login** with the email and password your hosting person created for you.
 
 There are two kinds of logins:
 - **Admin** — everything, including payments, prices and exports.

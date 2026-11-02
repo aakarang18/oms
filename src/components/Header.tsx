@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Logo } from './Brand';
-import { site, whatsappLink } from '@/lib/config';
+import { eventHref, whatsappLink } from '@/lib/config';
 
 const links = [
-  { href: `/events/${site.flagshipSlug}`, label: 'Events' },
+  { href: eventHref('/'), label: 'Jhumka City Run' },
   { href: '/partners', label: 'Partner with us' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' }
@@ -42,7 +42,7 @@ export function Header() {
             ))}
           </nav>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link href="/register" className="btn btn-primary btn-sm">Register</Link>
+            <a href={eventHref('/register')} className="btn btn-primary btn-sm">Register</a>
             <button className="menu-btn" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B1B1F" strokeWidth="2.4" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
             </button>
@@ -63,7 +63,7 @@ export function Header() {
               <Link key={l.href} href={l.href} className="big">{l.label}</Link>
             ))}
           </nav>
-          <Link href="/register" className="btn btn-coral btn-block" style={{ marginTop: 28 }}>Register for Jhumka City Run</Link>
+          <a href={eventHref('/register')} className="btn btn-coral btn-block" style={{ marginTop: 28 }}>Register for Jhumka City Run</a>
           {wa && <a href={wa} style={{ display: 'block', marginTop: 20, color: '#DCE7E1' }}>WhatsApp us</a>}
         </div>
       )}

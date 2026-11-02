@@ -1,14 +1,43 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { eventDomainFor, eventDomains, site } from '@/lib/config';
 
-// Keeps the admin login session fresh. Public pages are not affected.
+// Paths an event subdomain serves itself; everything else goes to the main site.
+const SHARED = /^\/(api|_next|images|icon\.svg|robots\.txt|sitemap\.xml)(\/|$)/;
+
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) return response;
+  const url = request.nextUrl;
+  const host = (request.headers.get('host') || '').split(':')[0].toLowerCase();
+  const path = url.pathname;
 
-  const supabase = createServerClient(url, anon, {
+  // ----- Event subdomain, e.g. jhumkacitymarathon.casaatleta.com -----
+  const eventSlug = eventDomains[host];
+  if (eventSlug) {
+    if (path === '/') return NextResponse.rewrite(new URL(`/e/${eventSlug}${url.search}`, request.url));
+    if (path === '/register') return NextResponse.rewrite(new URL(`/e/${eventSlug}/register${url.search}`, request.url));
+    if (SHARED.test(path)) return NextResponse.next();
+    return NextResponse.redirect(`${site.url}${path}${url.search}`);
+  }
+
+  // ----- Main site: send event pages to their own domain -----
+  const eventPage = path.match(/^\/(?:events|e)\/([^/]+)(\/register)?\/?$/);
+  if (eventPage) {
+    const domain = eventDomainFor(eventPage[1]);
+    if (domain) return NextResponse.redirect(`https://${domain}${eventPage[2] ?? ''}${url.search}`, 308);
+  }
+  if (path === '/register') {
+    const domain = eventDomainFor(site.flagshipSlug);
+    if (domain) return NextResponse.redirect(`https://${domain}/register${url.search}`, 308);
+  }
+
+  if (!path.startsWith('/admin') && !path.startsWith('/api/admin')) return NextResponse.next();
+
+  // ----- Admin: keep the login session fresh -----
+  let response = NextResponse.next({ request });
+  const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supaUrl || !anon) return response;
+  const supabase = createServerClient(supaUrl, anon, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (list) => {
@@ -19,10 +48,8 @@ export async function middleware(request: NextRequest) {
     }
   });
   const { data } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
   if (!data.user && path.startsWith('/admin') && !path.startsWith('/admin/login')) {
-    const login = request.nextUrl.clone();
+    const login = url.clone();
     login.pathname = '/admin/login';
     return NextResponse.redirect(login);
   }
@@ -30,5 +57,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*']
+  matcher: ['/((?!_next/static|_next/image|images/|icon.svg).*)']
 };

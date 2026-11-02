@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Logo } from './Brand';
-import { instagramLink, site } from '@/lib/config';
+import { eventHref, instagramLink, site } from '@/lib/config';
 
 export function Footer() {
   const ig = instagramLink();
@@ -15,8 +15,8 @@ export function Footer() {
           <div className="stack" style={{ gap: 10 }}>
             <div className="label-sm">Explore</div>
             <Link href="/about">About</Link>
-            <Link href={`/events/${site.flagshipSlug}`}>Events</Link>
-            <Link href={`/events/${site.flagshipSlug}#faqs`}>FAQs</Link>
+            <a href={eventHref('/')}>Jhumka City Run</a>
+            <a href={`${eventHref('/')}#faqs`}>FAQs</a>
             <Link href="/contact">Contact</Link>
             <Link href="/partners">Partner with us</Link>
             {ig && <a href={ig} rel="noopener">Instagram</a>}

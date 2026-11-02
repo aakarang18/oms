@@ -1,6 +1,6 @@
 import 'server-only';
 import { Resend } from 'resend';
-import { site } from './config';
+import { eventHref, site } from './config';
 import { eventDate, inr, TBA } from './format';
 import type { EventRow, RaceRow, RegistrationRow } from './types';
 
@@ -39,7 +39,7 @@ export function confirmationEmail(reg: RegistrationRow, race: RaceRow, event: Ev
   const start = event.start_point ?? `${TBA}, Bareilly`;
   const kids = race.is_kids;
   const greeting = kids ? (reg.guardian_name?.split(' ')[0] ?? 'there') : reg.full_name.split(' ')[0];
-  const eventUrl = `${site.url}/events/${event.slug}`;
+  const eventUrl = eventHref('/', event.slug);
   const rows = [
     row('Race', race.name),
     row(kids ? 'Child’s name' : 'Participant', reg.full_name),

@@ -40,7 +40,7 @@ The owner adds you as a collaborator on the GitHub repository (**Settings → Co
 2. **Account & Settings → API Keys → Generate Key** (in Test Mode first). Copy the **Key ID** and **Key Secret**.
 3. **Account & Settings → Payment capture**: set to **Automatic capture** (recommended).
 4. Webhook (after Vercel is set up, step 5): **Account & Settings → Webhooks → Add new webhook**
-   - URL: `https://YOUR-DOMAIN/api/webhooks/razorpay`
+   - URL: `https://casaatleta.com/api/webhooks/razorpay`
    - Secret: make up a long random string — this becomes `RAZORPAY_WEBHOOK_SECRET`
    - Events: `payment.captured`, `payment.failed`, `order.paid`
    - Do this once for Test Mode and again for Live Mode (they are separate).
@@ -56,7 +56,8 @@ The owner adds you as a collaborator on the GitHub repository (**Settings → Co
 
 | Variable | Value |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://www.your-domain.in` |
+| `NEXT_PUBLIC_SITE_URL` | `https://casaatleta.com` (main company site) |
+| `NEXT_PUBLIC_EVENT_DOMAINS` | `jhumkacitymarathon.casaatleta.com=jhumka-city-run` |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role key (**secret**) |
@@ -74,16 +75,32 @@ The owner adds you as a collaborator on the GitHub repository (**Settings → Co
 3. Click **Deploy**. Variables starting with `NEXT_PUBLIC_` are baked in at build time — after changing any of them, **redeploy**.
 4. Region: **Settings → Functions → Region** → `bom1` (Mumbai) for speed.
 
-## 6. Connect the domain
-1. Vercel → Project → **Settings → Domains → Add** `your-domain.in` and `www.your-domain.in`.
-2. Vercel shows DNS records (usually an **A record** `76.76.21.21` for the bare domain and a **CNAME** `cname.vercel-dns.com` for `www`). Add them at the company where the domain was bought (GoDaddy, Hostinger, etc.).
-3. SSL (the padlock) is issued automatically once DNS is correct — allow up to a few hours.
-4. Make sure `NEXT_PUBLIC_SITE_URL` matches the final address and redeploy.
+## 6. Connect the domains
+The **same Vercel project** serves both addresses:
+
+| Address | Shows |
+|---|---|
+| `casaatleta.com` (+ `www`) | Company site: home, about, partners, contact, admin |
+| `jhumkacitymarathon.casaatleta.com` | Jhumka City Run's own site: event page + registration |
+
+1. Vercel → Project → **Settings → Domains → Add** all three: `casaatleta.com`, `www.casaatleta.com` and `jhumkacitymarathon.casaatleta.com`. Set `www` to redirect to `casaatleta.com`.
+2. At the company where the domain was bought (GoDaddy, Hostinger, etc.), add the DNS records Vercel shows — usually:
+   - `A` record, name `@` → `76.76.21.21`
+   - `CNAME` record, name `www` → `cname.vercel-dns.com`
+   - `CNAME` record, name `jhumkacitymarathon` → `cname.vercel-dns.com`
+3. SSL (the padlock) is issued automatically for each address once DNS is correct — allow up to a few hours.
+4. Check `NEXT_PUBLIC_SITE_URL=https://casaatleta.com` and `NEXT_PUBLIC_EVENT_DOMAINS=jhumkacitymarathon.casaatleta.com=jhumka-city-run`, then redeploy.
+
+How it behaves: links to the event on casaatleta.com (and old `/events/jhumka-city-run` or `/register` links) automatically forward to the event subdomain. On the event subdomain, links to About, Contact, legal pages and admin go back to casaatleta.com. Registrations, payments and the admin area are shared — one database, one dashboard.
+
+**Adding a future event with its own subdomain** (e.g. a cycling ride): create the event in the database, add the subdomain in Vercel + DNS as above, and append it to the variable, comma-separated: `jhumkacitymarathon.casaatleta.com=jhumka-city-run,bareillyride.casaatleta.com=bareilly-ride`. No code changes needed.
+
+Razorpay webhook URL can use either domain, e.g. `https://casaatleta.com/api/webhooks/razorpay`.
 
 ## 7. Test before going live (Test Mode)
-1. Sign in at `https://your-domain/admin/login`.
+1. Sign in at `https://casaatleta.com/admin/login`.
 2. **Races & pricing**: set a fee (e.g. ₹10) and capacity for the 5K, set it to **Open**, save.
-3. On the public site, register for the 5K. In the Razorpay window use a [Razorpay test card or test UPI ID](https://razorpay.com/docs/payments/payments/test-card-upi-details/).
+3. On `https://jhumkacitymarathon.casaatleta.com`, register for the 5K. In the Razorpay window use a [Razorpay test card or test UPI ID](https://razorpay.com/docs/payments/payments/test-card-upi-details/).
 4. Check: success screen shows a registration ID like `JCR-5K-000001`, the confirmation email arrives, and the participant appears in **Admin → Participants** as **Paid**.
 5. Try a failed payment (Razorpay's failure test card) → the site shows "Payment didn't go through" and the admin list shows **Failed**.
 6. Close the payment window without paying → "Payment not completed" with a retry button.

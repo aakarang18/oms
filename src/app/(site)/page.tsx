@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getEventBundle, getSponsors } from '@/lib/content';
 import { eventDate, TBA } from '@/lib/format';
-import { site } from '@/lib/config';
+import { eventHref } from '@/lib/config';
 import { Arrow } from '@/components/Brand';
 import { NotifyButton } from '@/components/NewsletterPopup';
 import { Sponsors } from '@/components/Sponsors';
@@ -12,7 +12,7 @@ export default async function HomePage() {
   const [bundle, sponsors] = await Promise.all([getEventBundle(), getSponsors()]);
   const ev = bundle?.event;
   const anyOpen = bundle?.races.some((r) => r.status === 'open');
-  const eventUrl = `/events/${site.flagshipSlug}`;
+  const eventUrl = eventHref('/');
 
   return (
     <>
@@ -24,8 +24,8 @@ export default async function HomePage() {
             <h1 className="d h-xl forest">Bareilly,<br />it’s time<br />to <span className="coral">run.</span></h1>
             <p className="lead" style={{ margin: 0, maxWidth: 520 }}>Bringing people together through running, movement and unforgettable sporting experiences — starting with our flagship event, Jhumka City Run.</p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href={anyOpen ? '/register' : eventUrl} className="btn btn-primary">Register for Jhumka City Run</Link>
-              <Link href={eventUrl} className="btn btn-outline">Explore Our Events</Link>
+              <a href={anyOpen ? eventHref('/register') : eventUrl} className="btn btn-primary">Register for Jhumka City Run</a>
+              <a href={eventUrl} className="btn btn-outline">Explore Our Events</a>
             </div>
           </div>
           <div className="photo" style={{ height: 600 }}>
@@ -41,10 +41,10 @@ export default async function HomePage() {
                 <span>Bareilly, UP</span>
                 <span>5K · 10K · 21K · Kids Run</span>
               </div>
-              <Link href={eventUrl} className="btn btn-white" style={{ justifyContent: 'space-between', background: 'var(--chalk)', paddingRight: 6 }}>
+              <a href={eventUrl} className="btn btn-white" style={{ justifyContent: 'space-between', background: 'var(--chalk)', paddingRight: 6 }}>
                 Choose your distance
                 <span style={{ width: 40, height: 40, borderRadius: 99, background: 'var(--coral)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Arrow /></span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default async function HomePage() {
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
               <h3 className="d" style={{ margin: 0, fontSize: 34, lineHeight: 0.95 }}>{ev?.name ?? 'Jhumka City Run'}</h3>
               <div className="muted" style={{ fontSize: 14, fontWeight: 600 }}>Date {ev?.event_date ? eventDate(ev.event_date, { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'} · Bareilly · 5K / 10K / 21K / Kids Run</div>
-              <Link href={eventUrl} className="forest" style={{ marginTop: 'auto', fontWeight: 700, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>View event →</Link>
+              <a href={eventUrl} className="forest" style={{ marginTop: 'auto', fontWeight: 700, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>View event →</a>
             </div>
           </article>
           <article style={{ background: 'var(--mint)', borderRadius: 24, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

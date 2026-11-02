@@ -2,6 +2,10 @@
 
 The website for **Casa Atleta**, a running and endurance-events company in Bareilly, Uttar Pradesh. The first event is **Jhumka City Run** (5K, 10K, 21K Half Marathon and Kids Run).
 
+## Addresses
+- **casaatleta.com**: company site (home, about, partners, contact, admin at `/admin`).
+- **jhumkacitymarathon.casaatleta.com**: Jhumka City Run's own site (event page + registration), set with `NEXT_PUBLIC_EVENT_DOMAINS`. One codebase, one database.
+
 ## What's included
 - **Public site:** homepage, event page (distances, schedule, routes, race-day info, FAQs, countdown), About, Contact, Partner with us, legal pages, newsletter popup. It works on phones and has SEO (sitemap, page titles, event data for Google once the date is confirmed).
 - **Registration:** 5-step form, Kids Run with parent/guardian details, age and capacity checks, Razorpay payment (UPI, cards, net banking), verified on the server, unique registration IDs (e.g. `JCR-21K-000123`), confirmation emails, and handling of failed, pending and duplicate payments.
@@ -23,7 +27,9 @@ Without the environment variables, the public pages still work and show "To be a
 ```
 supabase/schema.sql       Database tables + business rules (capacity, payments, stats)
 supabase/seed.sql         Jhumka City Run event, races and starter FAQs
-src/app/(site)/           Public pages
+src/app/(site)/           Company site pages
+src/app/e/[slug]/         Event's own site (served on its subdomain)
+src/middleware.ts         Routes event subdomains; protects /admin
 src/app/admin/            Admin area (login required)
 src/app/api/              Registration, payment verification, Razorpay webhook, forms, CSV export
 src/components/           Shared UI (header, footer, registration form, popup…)

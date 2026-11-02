@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { site } from '@/lib/config';
+import { eventHref } from '@/lib/config';
 
 export const metadata: Metadata = { title: 'About us', description: 'Casa Atleta is a sports and endurance-events company from Bareilly — a home for every athlete.' };
 
@@ -70,7 +70,7 @@ export default function AboutPage() {
         <div style={{ background: 'var(--forest)', color: '#fff', borderRadius: 28, padding: 'clamp(28px,5vw,64px)', display: 'flex', flexWrap: 'wrap', gap: 28, alignItems: 'center', justifyContent: 'space-between' }}>
           <h2 className="d" style={{ margin: 0, fontSize: 'clamp(44px,6vw,88px)', lineHeight: 0.9 }}>Come run<br /><span style={{ color: 'var(--gold)' }}>with us.</span></h2>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link href={`/events/${site.flagshipSlug}`} className="btn btn-coral">See Jhumka City Run</Link>
+            <a href={eventHref('/')} className="btn btn-coral">See Jhumka City Run</a>
             <Link href="/partners" className="btn" style={{ border: '2px solid #fff', color: '#fff' }}>Partner with us</Link>
           </div>
         </div>

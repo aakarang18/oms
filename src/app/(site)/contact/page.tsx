@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ContactForm } from '@/components/Forms';
-import { instagramLink, site, whatsappLink } from '@/lib/config';
+import { eventHref, instagramLink, site, whatsappLink } from '@/lib/config';
 
 export const metadata: Metadata = { title: 'Contact us', description: 'Contact Casa Atleta in Bareilly about Jhumka City Run, your registration, volunteering or media.' };
 
@@ -26,7 +26,7 @@ export default function ContactPage({ searchParams }: { searchParams: { topic?: 
             <div style={{ background: 'var(--mint)', borderRadius: 20, padding: 22 }}>
               <b style={{ fontSize: 17 }}>Quick answers</b>
               <p className="muted" style={{ margin: '6px 0 12px', lineHeight: 1.5 }}>Race dates, bib collection, refunds and more.</p>
-              <Link href={`/events/${site.flagshipSlug}#faqs`} className="forest" style={{ fontWeight: 700 }}>Read the FAQs →</Link>
+              <a href={`${eventHref('/')}#faqs`} className="forest" style={{ fontWeight: 700 }}>Read the FAQs →</a>
             </div>
           </div>
         </div>
